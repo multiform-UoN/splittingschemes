@@ -13,5 +13,5 @@ deactivate
 
 clear
 echo ""
-echo "use the command 'source $envname' in this directory to source the virtual environment!!!"
+echo "use the command 'source $envname/bin/activate' in this directory to source the virtual environment!!!"
 echo ""
