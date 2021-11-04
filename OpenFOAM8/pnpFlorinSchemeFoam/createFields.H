@@ -41,7 +41,7 @@ volVectorField U
 
 
 
-//#include "createPhi.H" 
+// #include "createPhi.H" 
 Info<< "Reading/calculating face flux field phi\n" << endl;
 surfaceScalarField phi
 (
@@ -71,6 +71,10 @@ surfaceScalarField phiNP
     ),
     phi*scalar(0)
 );
+
+
+
+/*-------------------------------------------------------------------------------*/
 
 
 

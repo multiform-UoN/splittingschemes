@@ -22,15 +22,15 @@ You should have received a copy of the GNU General Public License
 along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-pnpFlorin
+pnpFlorinSchemeFoam
 
 Description
-Transient solver for multiple species transport with Nernst-Planck forcing
+Transient solver for a single species transport with Nernst-Planck forcing 
 and Poisson potential (electrostatic approximation).
-Coupling is implemented using a segregated algorithm.
+Coupling is implemented using th L scheme (from Florin Radu notes).
 
 Authors:
-Roberto Nuca,  Nottingham (2021)
+Federico Municchi, Matteo Icardi, Roberto Nuca,  Nottingham (2021)
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
