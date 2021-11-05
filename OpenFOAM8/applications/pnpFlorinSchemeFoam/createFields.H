@@ -93,6 +93,8 @@ IOdictionary electrokineticProperties
 );
 
 
+const dimensionedScalar L(electrokineticProperties.lookup("L"));
+
 //- Read fluid relative dielectric
 const dimensionedScalar epsilonR_(electrokineticProperties.lookup("epsilonR"));
 
@@ -105,6 +107,7 @@ const dictionary Cprop(electrokineticProperties.subDict("Cprop"));
 const dimensionedScalar D(Cprop.lookup("D"));
 const dimensionedScalar Dphi(Cprop.lookup("Dphi"));
 const dimensionedScalar Z(Cprop.lookup("Z"));
+
 
 //- Create charge density field
 volScalarField rho

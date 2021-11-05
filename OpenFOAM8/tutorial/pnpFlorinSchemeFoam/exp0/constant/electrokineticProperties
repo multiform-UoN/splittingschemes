@@ -15,7 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-epsilonR  epsilonR [ 0 2 -1 0 0 0 0 ] 1;
+epsilonR  epsilonR  [ 0 2 -1 0 0 0 0 ] 1;
+
+L           L       [ 0 0 -1 0 0 0 0 ] 0.01;
 
 Cprop
 {

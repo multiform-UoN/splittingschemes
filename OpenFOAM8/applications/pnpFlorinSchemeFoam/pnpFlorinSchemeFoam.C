@@ -97,25 +97,18 @@ int main(int argc, char *argv[])
                   + fvm::div(phi, C, "div(phi,C)")
                   + fvm::div(phiNP, C, "div(phiNP,C)")
                   - fvm::laplacian(D, C, "laplacian(D,C)")
+                  + fvm::Sp(L,C)
+                  == 
+                  L*C
                 );
 
-                //constrainFluxes(CEqn);
                 CEqn.relax();
                 CEqn.solve();
-
                 C.relax();
                 C.correctBoundaryConditions();
-
-                // //- Regularise solution
-                // {
-                //     //- Force solution lower bound
-                //     C = (mag(C) + C)/scalar(2.0);
-                //     C.correctBoundaryConditions();
-                //
-                //     //- Relax
-                //     C.relax();
-                // }
             }
+
+            Info << "\n" << endl;
         }
 
         Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
