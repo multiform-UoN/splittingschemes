@@ -1,0 +1,94 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      C.anions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [ 0 0 0 0 0 0 0 ];
+
+internalField   uniform 1;
+
+boundaryField
+{
+    cathode
+    {
+        type noFlux;
+        /*
+        type            RobinPhi;
+        RobinK 0;
+        RobinF 0;
+        RobinD 1;
+        phi "phiNP";
+        value           uniform 1;
+        */
+    }
+
+    anode
+    {
+        type noFlux;
+
+    /*
+        type            RobinPhi;
+        RobinK 0;
+        RobinF 0;
+        RobinD 1;
+        phi "phiNP";
+        value           uniform 1;
+        fluxICoeffs     uniform 0;
+        fluxBCoeffs     uniform 0;
+        snGrad          uniform 0;
+
+        name    heavisideFlux;
+
+        code
+        #{
+            this->fluxBoundaryCoeffs() =
+                pos
+                (
+                    scalar(0.05)
+                    -
+                    (
+                        this->db().time().value()
+                        - this->db().time().deltaT().value()
+                    )
+                );
+            this->fluxInternalCoeffs() = Zero;
+            this->snGradRef() = Zero;
+            operator==(1.0);
+        #};
+
+        // codeInclude
+        //#{
+        //    #include "fvCFD.H"
+        //#};
+
+        // codeOptions
+        //#{
+        //    -I$(LIB_SRC)/finiteVolume/lnInclude
+        //#};
+
+    */
+    }
+
+    "top|bottom"
+    {
+        type            zeroGradient;
+    }
+
+    frontAndBack
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //
