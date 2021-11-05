@@ -41,101 +41,90 @@ Federico Municchi, Matteo Icardi, Roberto Nuca,  Nottingham (2021)
 
 int main(int argc, char *argv[])
 {
-  #include "setRootCaseLists.H"
-  #include "createTime.H"
-  #include "createMesh.H"
+    #include "setRootCaseLists.H"
+    #include "createTime.H"
+    #include "createMesh.H"
 
-  // Add pimple coupling controls
-  pimpleControl pimple(mesh);
+    // Add pimple coupling controls
+    pimpleControl pimple(mesh);
 
-  #include "createFields.H"
+    #include "createFields.H"
 
-  // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-  Info<< "\nStarting time loop\n" << endl;
-
-  while (runTime.loop())
-  {
-    Info<< "Time = " << runTime.timeName() << nl << endl;
-
-    // --- Coupling loop
-    while (pimple.loop())
+    Info<< "\nStarting time loop\n" << endl;
+    while (runTime.loop())
     {
-      //-Update charge density
-      {
-        rho *= scalar(0); //- Simply reset to zero
-        rho += C*Z;
-      }
+        Info<< "Time = " << runTime.timeName() << nl << endl;
 
-      //- Solve Poisson
-      while (pimple.correctNonOrthogonal())
-      {
+        // --- Coupling loop
+        while (pimple.loop())
+        {
+            //-Update charge density
+            rho *= scalar(0); //- Simply reset to zero
+            rho += C*Z;
 
-        // V.storePrevIter();
-        fvScalarMatrix VEqn(-fvm::laplacian(epsilon_, V) == -rho);
+            //- Solve Poisson
+            while (pimple.correctNonOrthogonal())
+            {
+                // V.storePrevIter();
+                fvScalarMatrix VEqn(-fvm::laplacian(epsilon_, V) == -rho);
 
-        // VEqn.setReference(VRefCell, VRefValue);
-        VEqn.relax();
-        VEqn.solve();
-        V.relax();
-        V.correctBoundaryConditions();
-      }
+                // VEqn.setReference(VRefCell, VRefValue);
+                VEqn.relax();
+                VEqn.solve();
+                V.relax();
+                V.correctBoundaryConditions();
+            }
 
-      //- Evaluate specific Nerst-Plank flux
-      const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
-      scalar CoNum = 0.0;
-      scalar meanCoNum = 0.0;
+            //- Evaluate specific Nerst-Plank flux
+            phiNP = -fvc::flux(fvc::grad(V))*(Dphi)*Z;
+            // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
 
-      scalarField sumPhi(fvc::surfaceSum(mag(phi+phiNP))().primitiveField());
-      CoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
-      meanCoNum = 0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
+            scalar CoNum = 0.0;
+            scalar meanCoNum = 0.0;
+            scalarField sumPhi(fvc::surfaceSum(mag(phi+phiNP))().primitiveField());
+            CoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
+            meanCoNum = 0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
 
-      Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
+            Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
 
-      //- Non-orthogonal correction loop
-      while (pimple.correctNonOrthogonal())
-      {
+            //- Non-orthogonal correction loop
+            while (pimple.correctNonOrthogonal())
+            {
+                C.storePrevIter();
+                fvScalarMatrix CEqn
+                (
+                    fvm::ddt(C)
+                  + fvm::div(phi, C, "div(phi,C)")
+                  + fvm::div(phiNP, C, "div(phiNP,C)")
+                  - fvm::laplacian(D, C, "laplacian(D,C)")
+                );
 
-        C.storePrevIter();
-        fvScalarMatrix CEqn
-        (
-            fvm::ddt(C)
-          + fvm::div(phi, C, "div(phi,C)")
-          + fvm::div(phiNP, C, "div(phiNP,C)")
-          - fvm::laplacian(D, C, "laplacian(D,C)")
-        );
+                //constrainFluxes(CEqn);
+                CEqn.relax();
+                CEqn.solve();
 
-        //constrainFluxes(CEqn);
+                C.relax();
+                C.correctBoundaryConditions();
 
-        CEqn.relax();
-        CEqn.solve();
+                // //- Regularise solution
+                // {
+                //     //- Force solution lower bound
+                //     C = (mag(C) + C)/scalar(2.0);
+                //     C.correctBoundaryConditions();
+                //
+                //     //- Relax
+                //     C.relax();
+                // }
+            }
+        }
 
-        C.relax();
-        C.correctBoundaryConditions();
-
-        // //- Regularise solution
-        // {
-        //     //- Force solution lower bound
-        //     C = (mag(C) + C)/scalar(2.0);
-        //     C.correctBoundaryConditions();
-        //
-        //     //- Relax
-        //     C.relax();
-        // }
-      }
-
+        Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
+        runTime.write();
+        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 
-    Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
-
-    runTime.write();
-
-    Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
-  }
-
-  Info<< "End\n" << endl;
-
-  return 0;
+    Info<< "End\n" << endl;
+    return 0;
 }
 
 

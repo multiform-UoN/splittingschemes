@@ -99,13 +99,12 @@ const dimensionedScalar epsilonR_(electrokineticProperties.lookup("epsilonR"));
 //- Calculate effective dielectric
 const dimensionedScalar epsilon_(epsilonR_);
 
-//- Read the C dictionary
-const dictionary Cprop(electrokineticProperties.lookup("C"));
+//- Read the Cprop dictionary
+const dictionary Cprop(electrokineticProperties.subDict("Cprop"));
+
 const dimensionedScalar D(Cprop.lookup("D"));
 const dimensionedScalar Dphi(Cprop.lookup("Dphi"));
 const dimensionedScalar Z(Cprop.lookup("Z"));
-
-phiNP = -fvc::flux(fvc::grad(V))*(Dphi)*Z;
 
 //- Create charge density field
 volScalarField rho

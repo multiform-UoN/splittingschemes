@@ -17,7 +17,7 @@ FoamFile
 
 epsilonR  epsilonR [ 0 2 -1 0 0 0 0 ] 1;
 
-C
+Cprop
 {
     Z        Z [0 0 -1 0 0 0 0]     1.0;
     D        D [0 2 -1 0 0 0 0]     0.1;

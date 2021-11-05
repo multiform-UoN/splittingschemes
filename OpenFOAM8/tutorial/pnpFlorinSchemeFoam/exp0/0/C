@@ -36,48 +36,14 @@ boundaryField
     anode
     {
         type noFlux;
-
-    /*
+        /*
         type            RobinPhi;
         RobinK 0;
         RobinF 0;
         RobinD 1;
         phi "phiNP";
         value           uniform 1;
-        fluxICoeffs     uniform 0;
-        fluxBCoeffs     uniform 0;
-        snGrad          uniform 0;
-
-        name    heavisideFlux;
-
-        code
-        #{
-            this->fluxBoundaryCoeffs() =
-                pos
-                (
-                    scalar(0.05)
-                    -
-                    (
-                        this->db().time().value()
-                        - this->db().time().deltaT().value()
-                    )
-                );
-            this->fluxInternalCoeffs() = Zero;
-            this->snGradRef() = Zero;
-            operator==(1.0);
-        #};
-
-        // codeInclude
-        //#{
-        //    #include "fvCFD.H"
-        //#};
-
-        // codeOptions
-        //#{
-        //    -I$(LIB_SRC)/finiteVolume/lnInclude
-        //#};
-
-    */
+        */
     }
 
     "top|bottom"
