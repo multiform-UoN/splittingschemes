@@ -20,7 +20,7 @@ conv 1e-10;
 
 solvers
 {
-    V
+    "V.*"
     {
         solver              PBiCGStab;
         preconditioner      FDIC;
@@ -29,11 +29,10 @@ solvers
         relTol              0;
     }
 
-    VFinal
-    {
-        $V;
-        relTol              0;
-    }
+    // VFinal
+    // {
+    //     $V;
+    // }
 
     "C.*"
     {
@@ -61,6 +60,7 @@ PIMPLE
         }
 
     }
+
     residualControl
     {
         ".*"  $conv;

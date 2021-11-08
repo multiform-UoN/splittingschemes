@@ -56,43 +56,47 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         // --- Coupling loop
-        while (pimple.loop())
+        while ( pimple.loop() )
         {
             //-Update charge density
             rho *= scalar(0); //- Simply reset to zero
-            rho += C*Z;
+            rho += Z*C;
 
             //- Solve Poisson
-            while (pimple.correctNonOrthogonal())
+            while ( pimple.correctNonOrthogonal() )
             {
                 // V.storePrevIter();
-                fvScalarMatrix VEqn(-fvm::laplacian(epsilon_, V) == -rho);
+                fvScalarMatrix VEqn( -fvm::laplacian(epsilon_, V) == -rho );
 
                 // VEqn.setReference(VRefCell, VRefValue);
-                VEqn.relax();
+                // VEqn.relax();
                 VEqn.solve();
-                V.relax();
+                // V.relax();
                 V.correctBoundaryConditions();
             }
 
             //- Evaluate specific Nerst-Plank flux
-            phiNP = -fvc::flux(fvc::grad(V))*(Dphi)*Z;
+            phiNP = -fvc::flux( Dphi * Z * fvc::grad(V) );
             // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
 
-            scalar CoNum = 0.0;
-            scalar meanCoNum = 0.0;
-            scalarField sumPhi(fvc::surfaceSum(mag(phi+phiNP))().primitiveField());
-            CoNum = 0.5*gMax(sumPhi/mesh.V().field())*runTime.deltaTValue();
-            meanCoNum = 0.5*(gSum(sumPhi)/gSum(mesh.V().field()))*runTime.deltaTValue();
+            // scalar CoNum = 0.0;
 
-            Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
+            // scalar meanCoNum = 0.0;
+
+            // scalarField sumPhi( fvc::surfaceSum( mag( phi + phiNP ) )().primitiveField() );
+
+            // CoNum = 0.5 * gMax( sumPhi / mesh.V().field() ) * runTime.deltaTValue();
+
+            // meanCoNum = 0.5 * ( gSum( sumPhi ) / gSum( mesh.V().field() ) ) * runTime.deltaTValue();
+
+            // Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
 
             //- Non-orthogonal correction loop
-            while (pimple.correctNonOrthogonal())
+            while ( pimple.correctNonOrthogonal() )
             {
                 C.storePrevIter();
-                fvScalarMatrix CEqn
-                (
+
+                fvScalarMatrix CEqn(
                     fvm::ddt(C)
                   + fvm::div(phi, C, "div(phi,C)")
                   + fvm::div(phiNP, C, "div(phiNP,C)")
@@ -102,9 +106,9 @@ int main(int argc, char *argv[])
                   L*C
                 );
 
-                CEqn.relax();
+                // CEqn.relax();
                 CEqn.solve();
-                C.relax();
+                // C.relax();
                 C.correctBoundaryConditions();
             }
 

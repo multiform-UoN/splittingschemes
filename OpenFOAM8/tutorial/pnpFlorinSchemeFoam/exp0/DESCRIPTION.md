@@ -15,6 +15,7 @@
     2. [ch2](#d2)
 
 <h2 id="a0">Domain and Physical Problem</h2>
+
 ![domain](./disegno.png)
 
 <h2 id="b0">Equations and Boundary Conditions</h2>
