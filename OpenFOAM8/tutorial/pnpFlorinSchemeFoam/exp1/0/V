@@ -10,47 +10,32 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    object      C.anions;
+    object      V;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [ 0 0 0 0 0 0 0 ];
+dimensions      [0 0 0 0 0 0 0];
 
 internalField   uniform 0;
 
 boundaryField
 {
-    cathode
-    {
-        type noFlux;
-        /*
-        type            RobinPhi;
-        RobinK 0;
-        RobinF 0;
-        RobinD 1;
-        phi "phiNP";
-        value           uniform 1;
-        */
-    }
-
     anode
     {
         type            fixedValue;
         value           uniform 1;
-        // type noFlux;
-        /*
-        type            RobinPhi;
-        RobinK 0;
-        RobinF 0;
-        RobinD 1;
-        phi "phiNP";
-        value           uniform 1;
-        */
     }
 
-    "top|bottom"
+    "cathode.*"
     {
-        type            noFlux;
+        // type            zeroGradient;
+        type            fixedValue;
+        value           uniform 0;
+    }
+
+    wall
+    {
+        type            zeroGradient;
     }
 
     frontAndBack

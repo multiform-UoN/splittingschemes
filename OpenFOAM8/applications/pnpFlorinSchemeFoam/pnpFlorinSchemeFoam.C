@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
             }
 
             //- Evaluate specific Nerst-Plank flux
-            phiNP = -fvc::flux( Dphi * Z * fvc::grad(V) );
+            phiNP = fvc::flux( -Dphi * Z * fvc::grad(V) );
             // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
 
             // scalar CoNum = 0.0;
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
                   + fvm::div(phi, C, "div(phi,C)")
                   + fvm::div(phiNP, C, "div(phiNP,C)")
                   - fvm::laplacian(D, C, "laplacian(D,C)")
-                  + fvm::Sp(L,C)
+                  + fvm::Sp(L,C) // controllare se Su va a destra del termine ==
                   == 
                   L*C
                 );

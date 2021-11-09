@@ -16,23 +16,10 @@ FoamFile
 
 dimensions      [ 0 0 0 0 0 0 0 ];
 
-internalField   uniform 0;
+internalField   uniform 1;
 
 boundaryField
 {
-    cathode
-    {
-        type noFlux;
-        /*
-        type            RobinPhi;
-        RobinK 0;
-        RobinF 0;
-        RobinD 1;
-        phi "phiNP";
-        value           uniform 1;
-        */
-    }
-
     anode
     {
         type            fixedValue;
@@ -48,7 +35,20 @@ boundaryField
         */
     }
 
-    "top|bottom"
+    "cathode.*"
+    {
+        type noFlux;
+        /*
+        type            RobinPhi;
+        RobinK 0;
+        RobinF 0;
+        RobinD 1;
+        phi "phiNP";
+        value           uniform 1;
+        */
+    }
+
+    wall
     {
         type            noFlux;
     }

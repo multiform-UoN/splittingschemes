@@ -103,7 +103,6 @@ const dimensionedScalar epsilon_(epsilonR_);
 
 //- Read the Cprop dictionary
 const dictionary Cprop(electrokineticProperties.subDict("Cprop"));
-
 const dimensionedScalar D(Cprop.lookup("D"));
 const dimensionedScalar Dphi(Cprop.lookup("Dphi"));
 const dimensionedScalar Z(Cprop.lookup("Z"));
