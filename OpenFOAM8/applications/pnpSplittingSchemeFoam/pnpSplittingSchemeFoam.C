@@ -25,7 +25,7 @@ Application
 pnpFlorinSchemeFoam
 
 Description
-Transient solver for a single species transport with Nernst-Planck forcing 
+Transient solver for a single species transport with Nernst-Planck forcing
 and Poisson potential (electrostatic approximation).
 Coupling is implemented using th L scheme (from Florin Radu notes).
 
@@ -62,11 +62,19 @@ int main(int argc, char *argv[])
             rho *= scalar(0); //- Simply reset to zero
             rho += Z*C;
 
+            V.storePrevIter();
             //- Solve Poisson
             while ( pimple.correctNonOrthogonal() )
             {
                 // V.storePrevIter();
-                fvScalarMatrix VEqn( -fvm::laplacian(epsilon_, V) == -rho );
+                fvScalarMatrix VEqn
+                (
+                    - fvm::laplacian(epsilon_, V)
+                    ==
+                    - rho
+                    - fvm::Sp(LV,V) // controllare se Su va a destra del termine ==
+                    + LV*V.prevIter()
+                );
 
                 // VEqn.setReference(VRefCell, VRefValue);
                 // VEqn.relax();
@@ -92,18 +100,19 @@ int main(int argc, char *argv[])
             // Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
 
             //- Non-orthogonal correction loop
+            C.storePrevIter();
+
             while ( pimple.correctNonOrthogonal() )
             {
-                C.storePrevIter();
-
-                fvScalarMatrix CEqn(
+                fvScalarMatrix CEqn
+                (
                     fvm::ddt(C)
                   + fvm::div(phi, C, "div(phi,C)")
                   + fvm::div(phiNP, C, "div(phiNP,C)")
                   - fvm::laplacian(D, C, "laplacian(D,C)")
-                  + fvm::Sp(L,C) // controllare se Su va a destra del termine ==
-                  == 
-                  L*C
+                  ==
+                  - fvm::Sp(LC,C) // controllare se Su va a destra del termine ==
+                  + LC*C.prevIter()
                 );
 
                 // CEqn.relax();
@@ -112,6 +121,7 @@ int main(int argc, char *argv[])
                 C.correctBoundaryConditions();
             }
 
+            Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
             Info << "\n" << endl;
         }
 

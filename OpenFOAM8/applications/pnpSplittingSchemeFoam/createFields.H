@@ -93,7 +93,9 @@ IOdictionary electrokineticProperties
 );
 
 
-const dimensionedScalar L(electrokineticProperties.lookup("L"));
+const dimensionedScalar LC(electrokineticProperties.lookup("LC"));
+const dimensionedScalar LV(electrokineticProperties.lookup("LV"));
+
 
 //- Read fluid relative dielectric
 const dimensionedScalar epsilonR_(electrokineticProperties.lookup("epsilonR"));
