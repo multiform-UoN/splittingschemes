@@ -9,39 +9,22 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      V;
+    class       dictionary;
+    location    "constant";
+    object      electrokineticProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 0 0 0 0 0];
+epsilonR  epsilonR  [ 0 2 -1 0 0 0 0 ] 1;
 
-internalField   uniform 0;
+LC           LC       [ 0 0 -1 0 0 0 0 ] 6.0;
+LV           LV       [ 0 0 -1 0 0 0 0 ] 0;
 
-boundaryField
+Cprop
 {
-    anode
-    {
-        type            fixedValue;
-        value           uniform 1;
-    }
-
-    "cathode.*"
-    {
-        // type            zeroGradient;
-        type            fixedValue;
-        value           uniform 0;
-    }
-
-    wall
-    {
-        type            zeroGradient;
-    }
-
-    frontAndBack
-    {
-        type            empty;
-    }
+	Z        Z [0 0 -1 0 0 0 0]     1.31;
+    D        D [0 2 -1 0 0 0 0]     1.0;
+    Dphi     Dphi [0 2 0 0 0 0 0]   1.0;
 }
 
 // ************************************************************************* //
