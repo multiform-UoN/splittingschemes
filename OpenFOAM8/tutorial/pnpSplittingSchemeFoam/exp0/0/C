@@ -20,19 +20,6 @@ internalField   uniform 0;
 
 boundaryField
 {
-    cathode
-    {
-        type noFlux;
-        /*
-        type            RobinPhi;
-        RobinK 0;
-        RobinF 0;
-        RobinD 1;
-        phi "phiNP";
-        value           uniform 1;
-        */
-    }
-
     anode
     {
         type            fixedValue;
@@ -48,9 +35,23 @@ boundaryField
         */
     }
 
+    cathode
+    {
+        type noFlux;
+        /*
+        type            RobinPhi;
+        RobinK 0;
+        RobinF 0;
+        RobinD 1;
+        phi "phiNP";
+        value           uniform 1;
+        */
+    }
+
     "top|bottom"
     {
-        type            noFlux;
+        type            empty;
+        // type            noFlux;
     }
 
     frontAndBack

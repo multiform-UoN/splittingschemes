@@ -34,7 +34,8 @@ boundaryField
 
     "top|bottom"
     {
-        type            zeroGradient;
+        type            empty;
+        // type            zeroGradient;
     }
 
     frontAndBack
