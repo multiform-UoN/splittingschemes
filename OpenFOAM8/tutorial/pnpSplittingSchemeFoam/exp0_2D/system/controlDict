@@ -16,7 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 libs            ("libelectrokineticFoam.so");
 
-application     pnpAdimFoam;
+application     pnpSplittingSchemeFoam;
 
 startFrom       startTime;
 

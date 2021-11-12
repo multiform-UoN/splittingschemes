@@ -48,7 +48,7 @@ solvers
 PIMPLE
 {
 
-    nNonOrthogonalCorrectors 1;
+    nNonOrthogonalCorrectors 0;
     nOuterCorrectors 1000;
 
     outerCorrectorResidualControl
