@@ -20,5 +20,3 @@
 <h2 id="b0">Equations and Boundary Conditions</h2>
 
 <h2 id="c0">Numerical Methods</h2>
-
-

@@ -11,42 +11,40 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      fvSchemes;
+    object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+libs            ("libelectrokineticFoam.so");
 
-ddtSchemes
-{
-    default         steadyState; //backward
-}
+application     pnpAdimFoam;
 
-gradSchemes
-{
-    default         Gauss linear;
-}
+startFrom       startTime;
 
-divSchemes
-{
-    default         none;
-    div(phi,C)      Gauss upwind;
-    div(phiNP,C)    Gauss upwind;
+startTime       0;
 
-}
+stopAt          endTime;
 
-laplacianSchemes
-{
-    default         Gauss linear orthogonal;
-}
+endTime         1;
 
-interpolationSchemes
-{
-    default         linear;
-}
+deltaT          0.001;
 
-snGradSchemes
-{
-    default         orthogonal;
-}
+writeControl    timeStep;
+
+writeInterval   1;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
 
 
 // ************************************************************************* //
