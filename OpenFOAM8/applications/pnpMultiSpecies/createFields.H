@@ -1,5 +1,4 @@
-//- V is the electric potential
-Info<< "Reading field V\n" << endl;
+Info<< "Reading field V\n" << endl; // electric potential
 volScalarField V
 (
     IOobject

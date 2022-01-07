@@ -1,4 +1,4 @@
-Info<< "Reading field V\n" << endl;
+Info<< "Reading field V\n" << endl; // electric potential
 volScalarField V
 (
     IOobject
@@ -63,7 +63,7 @@ surfaceScalarField phiNP
     phi*scalar(0)
 );
 
-Info<< "Reading field C\n" << endl;
+Info<< "Reading field C\n" << endl; // concentration
 volScalarField C
 (
     IOobject
@@ -93,21 +93,14 @@ IOdictionary electrokineticProperties
 );
 
 
-const dimensionedScalar LC(electrokineticProperties.lookup("LC"));
-const dimensionedScalar LV(electrokineticProperties.lookup("LV"));
-
-
-//- Read fluid relative dielectric
-const dimensionedScalar epsilonR_(electrokineticProperties.lookup("epsilonR"));
-
-//- Calculate effective dielectric
-const dimensionedScalar epsilon_(epsilonR_);
+const dimensionedScalar LC(electrokineticProperties.lookup("L"));
 
 //- Read the Cprop dictionary
 const dictionary Cprop(electrokineticProperties.subDict("Cprop"));
-const dimensionedScalar D(Cprop.lookup("D"));
-const dimensionedScalar Dphi(Cprop.lookup("Dphi"));
-const dimensionedScalar Z(Cprop.lookup("Z"));
+const dimensionedScalar m(Cprop.lookup("m"));
+const dimensionedScalar a(Cprop.lookup("a"));
+const dimensionedScalar z1(Cprop.lookup("z1"));
+const dimensionedScalar z2(Cprop.lookup("z2"));
 
 
 //- Create charge density field
@@ -124,7 +117,7 @@ volScalarField rho
     mesh,
     dimensionedScalar(
         "rho",
-        dimensionSet(0,0,-1,0,0,0,0),
+        dimensionSet(0,-2,0,0,0,0,0),
         scalar(0)
     )
 );

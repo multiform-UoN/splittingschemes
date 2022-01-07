@@ -55,12 +55,11 @@ int main(int argc, char *argv[])
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        // --- Coupling loop
-        while ( pimple.loop() )
+        while ( pimple.loop() ) // coupling loop
         {
             //-Update charge density
             rho *= scalar(0); //- Simply reset to zero
-            rho += Z*C;
+            rho += z1*C;
 
             V.storePrevIter();
             //- Solve Poisson
@@ -69,11 +68,10 @@ int main(int argc, char *argv[])
                 // V.storePrevIter();
                 fvScalarMatrix VEqn
                 (
-                    - fvm::laplacian(epsilon_, V)
+                    fvm::laplacian(m, V)
                     ==
                     - rho
-                    - fvm::Sp(LV,V) // controllare se Su va a destra del termine ==
-                    + LV*V.prevIter()
+                    // - fvm::Sp(LV,V) // controllare se Su va a destra del termine ==
                 );
 
                 // VEqn.setReference(VRefCell, VRefValue);
@@ -84,19 +82,14 @@ int main(int argc, char *argv[])
             }
 
             //- Evaluate specific Nerst-Plank flux
-            phiNP = fvc::flux( -Dphi * Z * fvc::grad(V) );
+            phiNP = fvc::flux( -z2 * fvc::grad(V) );
             // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
 
             // scalar CoNum = 0.0;
-
             // scalar meanCoNum = 0.0;
-
             // scalarField sumPhi( fvc::surfaceSum( mag( phi + phiNP ) )().primitiveField() );
-
             // CoNum = 0.5 * gMax( sumPhi / mesh.V().field() ) * runTime.deltaTValue();
-
             // meanCoNum = 0.5 * ( gSum( sumPhi ) / gSum( mesh.V().field() ) ) * runTime.deltaTValue();
-
             // Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
 
             //- Non-orthogonal correction loop
@@ -107,12 +100,12 @@ int main(int argc, char *argv[])
                 fvScalarMatrix CEqn
                 (
                     fvm::ddt(C)
-                  + fvm::div(phi, C, "div(phi,C)")
+                  // + fvm::div(phi, C, "div(phi,C)") // convective flux
                   + fvm::div(phiNP, C, "div(phiNP,C)")
-                  - fvm::laplacian(D, C, "laplacian(D,C)")
-                  ==
-                  - fvm::Sp(LC,C) // controllare se Su va a destra del termine ==
-                  + LC*C.prevIter()
+                  - fvm::laplacian(a, C, "laplacian(a,C)")
+                  // ==
+                  // - fvm::Sp(LC,C) // controllare se Su va a destra del termine ==
+                  // + LC*C.prevIter()
                 );
 
                 // CEqn.relax();

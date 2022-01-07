@@ -1,0 +1,3 @@
+pnpSingleSpeciesPicard1.C
+
+EXE = $(FOAM_USER_APPBIN)/pnpSingleSpeciesPicard1

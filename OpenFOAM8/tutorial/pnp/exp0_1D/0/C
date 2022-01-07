@@ -37,7 +37,8 @@ boundaryField
 
     cathode
     {
-        type noFlux;
+        // type noFlux;
+        type    zeroGradient;
         /*
         type            RobinPhi;
         RobinK 0;

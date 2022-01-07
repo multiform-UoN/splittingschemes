@@ -46,7 +46,7 @@ for i,Lval in enumerate(LCvalues):
 
 		modifLine(transportProperties, 24, "\tZ        Z [0 0 -1 0 0 0 0]     {};".format(Zval))
 
-		os.system("pnpSplittingSchemeFoam")
+		os.system("pnpSingleSpeciesPicard1")
 
 		os.system("postProcess -func sampleDict -latestTime")
 

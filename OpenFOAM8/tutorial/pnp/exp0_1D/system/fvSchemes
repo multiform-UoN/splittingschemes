@@ -28,10 +28,9 @@ gradSchemes
 
 divSchemes
 {
-    default         none;
+    default         Gauss upwind;//none;
     div(phi,C)      Gauss upwind;
     div(phiNP,C)    Gauss upwind;
-
 }
 
 laplacianSchemes

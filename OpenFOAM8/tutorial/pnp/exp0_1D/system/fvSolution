@@ -20,7 +20,7 @@ conv 1e-10;
 
 solvers
 {
-    "deltaV.*"
+    "V.*"
     {
         solver              PBiCGStab;
         preconditioner      FDIC;
@@ -34,7 +34,7 @@ solvers
     //     $V;
     // }
 
-    "deltaC.*"
+    "C.*"
     {
         solver              PBiCGStab;
         preconditioner      DILU;
@@ -48,8 +48,8 @@ solvers
 PIMPLE
 {
 
-    nNonOrthogonalCorrectors 10;
-    nOuterCorrectors 100;
+    nNonOrthogonalCorrectors 0;
+    nOuterCorrectors 10;
 
     outerCorrectorResidualControl
     {
@@ -80,7 +80,7 @@ relaxationFactors
     equations
     {
         "C.*"       1;
-        V           1;
+        "V.*"       1;
     }
 }
 
