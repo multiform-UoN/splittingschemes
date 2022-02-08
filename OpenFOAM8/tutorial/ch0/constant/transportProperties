@@ -10,41 +10,12 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      controlDict;
+    location    "constant";
+    object      electrokineticProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-libs            ("libelectrokineticFoam.so");
 
-application     pnpFoam;
-
-startFrom       startTime;
-
-startTime       0;
-
-stopAt          endTime;
-
-endTime         0.99;
-
-deltaT          0.01;
-
-writeControl    timeStep;
-
-writeInterval   1;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  6;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   6;
-
-runTimeModifiable true;
-
+m               m               [0 2 -1 0 0 0 0]    1.0;
+epsilonsquare   epsilonsquare   [0 2  0 0 0 0 0]    1.0;
 
 // ************************************************************************* //

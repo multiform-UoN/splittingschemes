@@ -22,8 +22,11 @@ boundaryField
 {
     anode
     {
-        type            fixedValue;
-        value           uniform 1;
+        // type            fixedValue;
+        // value           uniform 1;
+
+        type noFlux;
+
         // type noFlux;
         /*
         type            RobinPhi;
@@ -35,18 +38,29 @@ boundaryField
         */
     }
 
-    "cathode.*"
+    cathode1
     {
         type noFlux;
-        /*
-        type            RobinPhi;
-        RobinK 0;
-        RobinF 0;
-        RobinD 1;
-        phi "phiNP";
-        value           uniform 1;
-        */
     }
+
+    cathode2
+    {
+        type noFlux;
+    }
+
+    // "cathode.*"
+    // {
+    //     // type noFlux;
+    //     type zeroGradient;
+        
+    //     type            RobinPhi;
+    //     RobinK 0;
+    //     RobinF 0;
+    //     RobinD 1;
+    //     phi "phiNP";
+    //     value           uniform 1;
+        
+    // }
 
     "top.*|bottom|wall"
     {
