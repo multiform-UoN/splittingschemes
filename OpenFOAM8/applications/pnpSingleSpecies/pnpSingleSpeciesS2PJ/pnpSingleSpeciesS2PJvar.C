@@ -58,38 +58,47 @@ int main(int argc, char *argv[])
         while ( pimple.loop() ) // coupling loop
         {
 
-            fvScalarMatrix cEqn(fvm::laplacian(-z2*C, V));
-            fvScalarMatrix dEqn(fvm::ddt(V) - fvm::laplacian(a, V));
-
-            V.storePrevIter();
-            fvScalarMatrix VEqn(
-                - fvm::laplacian(m, V) 
-                + fvm::Sp(z1*(scalar(1)/dEqn.A())*cEqn.A(), V)
-                ==
-                z1*(scalar(1)/dEqn.A())*dEqn.H()
-                + z1*(scalar(1)/dEqn.A())*cEqn.H()
-                );
-            VEqn.solve();
-            // V.correctBoundaryConditions();
+            fvScalarMatrix aEqn(fvm::laplacian(-z2*C, V));
+            fvScalarMatrix cEqn(fvm::laplacian(m, V));
 
             // phiNP = fvc::flux(-z2 * fvc::grad(V) );
             // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
+                // + fvm::div(phi, C, "div(phi,C)") // convective flux
+                // + fvm::div(phiNP, C, "div(phiNP,C)")
 
+            dimensionedScalar L("rho", dimensionSet(0,-2,0,0,0,0,0), scalar(0));
 
-            C.storePrevIter();
-            fvScalarMatrix CEqn
+            volScalarField CinvA(cEqn.A()*(scalar(1)/aEqn.A()));
+
+            fvScalarMatrix eq2
             (
-                fvm::ddt(C)
-              // + fvm::div(phi, C, "div(phi,C)") // convective flux
-              // + fvm::div(phiNP, C, "div(phiNP,C)")
-              - fvm::laplacian(a, C, "laplacian(a,C)")
-              ==
-              fvc::laplacian(z2*C.prevIter(),V)
+                fvm::Sp(z1, C)
+                - fvm::ddt(CinvA, C)
+                - fvm::laplacian(-a*CinvA, C, "laplacian(a,C)")
+                + fvm::Sp(L, C)
+                ==
+                - CinvA*aEqn.H()
+                + cEqn.H()
+                + L*C
             );
-            CEqn.solve();
-            C.correctBoundaryConditions();
+            eq2.solve();
 
-            Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
+            fvScalarMatrix eq1
+            (
+                fvm::laplacian(-z2*C, V)
+                ==
+                - fvc::ddt(C) 
+                - fvc::laplacian(-a*C)
+            );
+            eq1.solve();
+             
+
+            // C.storePrevIter();
+            // V.storePrevIter();
+            // C.correctBoundaryConditions();
+            // V.correctBoundaryConditions();
+
+            // Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
             Info << "\n" << endl;
         }
 

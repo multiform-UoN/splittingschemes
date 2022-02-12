@@ -21,16 +21,11 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Application
-pnpFlorinSchemeFoam
+Application: chFoam
 
-Description
-Transient solver for a single species transport with Nernst-Planck forcing
-and Poisson potential (electrostatic approximation).
-Coupling is implemented using th L scheme (from Florin Radu notes).
+Description: Cahn-Hilliard solver
 
-Authors:
-Federico Municchi, Matteo Icardi, Roberto Nuca,  Nottingham (2021)
+Authors: Roberto Nuca, Nottingham (2021)
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
@@ -45,7 +40,6 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createMesh.H"
 
-    // Add pimple coupling controls
     pimpleControl pimple(mesh);
 
     #include "createFields.H"
@@ -54,48 +48,46 @@ int main(int argc, char *argv[])
     while (runTime.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
+        dimensionedScalar L("rho", dimensionSet(0,0,1,0,0,0,0), scalar(0));
 
-        while ( pimple.loop() ) // coupling loop
+        fvScalarMatrix Aeqn( fvm::laplacian(mA, u) );
+        fvScalarMatrix Beqn( fvm::laplacian(mB, v) );
+        fvScalarMatrix Ceqn( fvm::ddt(L, u) + fvm::laplacian(mC, u) );
+        fvScalarMatrix Deqn( fvm::laplacian(mD, v) );
+
+        volScalarField CinvA(Ceqn.A()*(scalar(1)/Aeqn.A()));
+
+
+        while ( pimple.loop() )
         {
 
-            fvScalarMatrix cEqn(fvm::laplacian(-z2*C, V));
-            fvScalarMatrix dEqn(fvm::ddt(V) - fvm::laplacian(a, V));
-
-            V.storePrevIter();
-            fvScalarMatrix VEqn(
-                - fvm::laplacian(m, V) 
-                + fvm::Sp(z1*(scalar(1)/dEqn.A())*cEqn.A(), V)
+            fvScalarMatrix eq2(
+                fvm::laplacian(mD, v) 
+                - 
+                fvm::laplacian(mB*CinvA, v)
                 ==
-                z1*(scalar(1)/dEqn.A())*dEqn.H()
-                + z1*(scalar(1)/dEqn.A())*cEqn.H()
+                - CinvA*Aeqn.H() 
+                + Ceqn.H()
                 );
-            VEqn.solve();
+
+            eq2.solve();
+
+            
+            fvScalarMatrix eq1( fvm::laplacian(mA, u) == - fvc::laplacian(mB*v) );
+            
+            eq1.solve();
+
             // V.correctBoundaryConditions();
-
-            // phiNP = fvc::flux(-z2 * fvc::grad(V) );
-            // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
+            // V.storePrevIter();
 
 
-            C.storePrevIter();
-            fvScalarMatrix CEqn
-            (
-                fvm::ddt(C)
-              // + fvm::div(phi, C, "div(phi,C)") // convective flux
-              // + fvm::div(phiNP, C, "div(phiNP,C)")
-              - fvm::laplacian(a, C, "laplacian(a,C)")
-              ==
-              fvc::laplacian(z2*C.prevIter(),V)
-            );
-            CEqn.solve();
-            C.correctBoundaryConditions();
-
-            Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
-            Info << "\n" << endl;
+            // Info << "Concentration  = " << Foam::gSum(U().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
+            // Info << "\n" << endl;
         }
 
-        Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
+        // Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
         runTime.write();
-        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
+        // Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 
     Info<< "End\n" << endl;

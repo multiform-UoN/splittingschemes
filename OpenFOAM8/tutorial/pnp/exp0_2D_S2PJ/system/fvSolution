@@ -37,9 +37,10 @@ solvers
     "C.*"
     {
         solver              PBiCGStab;
-        // preconditioner      DIC;//DILU;
-        preconditioner      DILU;
-        smoother            DILU;
+        // preconditioner      DIC;
+        // preconditioner      DILU;
+        preconditioner      FDIC;
+        // smoother            DILU;
         tolerance           1e-12;
         relTol              0;
     }
