@@ -57,64 +57,45 @@ int main(int argc, char *argv[])
 
         while ( pimple.loop() ) // coupling loop
         {
-            //-Update charge density
-            rho *= scalar(0); //- Simply reset to zero
-            rho += z1*C;
 
-            V.storePrevIter();
-            //- Solve Poisson
-            while ( pimple.correctNonOrthogonal() )
-            {
-                // V.storePrevIter();
-                fvScalarMatrix VEqn
-                (
-                    fvm::laplacian(m, V)
-                    ==
-                    - rho
-                    // - fvm::Sp(LV,V) // controllare se Su va a destra del termine ==
-                );
+            fvScalarMatrix aEqn(fvm::ddt(C) + fvm::laplacian(-z2*fvc::grad(V), C) + fvc::laplacian(-a, C));
+            fvScalarMatrix cEqn(fvm::Sp(z1, C));
 
-                // VEqn.setReference(VRefCell, VRefValue);
-                // VEqn.relax();
-                VEqn.solve();
-                // V.relax();
-                // V.correctBoundaryConditions();
-            }
-
-            //- Evaluate specific Nerst-Plank flux
-            phiNP = fvc::flux( -z2 * fvc::grad(V) );
+            // phiNP = fvc::flux(-z2 * fvc::grad(V) );
             // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
+                // + fvm::div(phi, C, "div(phi,C)") // convective flux
+                // + fvm::div(phiNP, C, "div(phiNP,C)")
 
-            // scalar CoNum = 0.0;
-            // scalar meanCoNum = 0.0;
-            // scalarField sumPhi( fvc::surfaceSum( mag( phi + phiNP ) )().primitiveField() );
-            // CoNum = 0.5 * gMax( sumPhi / mesh.V().field() ) * runTime.deltaTValue();
-            // meanCoNum = 0.5 * ( gSum( sumPhi ) / gSum( mesh.V().field() ) ) * runTime.deltaTValue();
-            // Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
+            // dimensionedScalar L("rho", dimensionSet(0,0,-1,0,0,0,0), scalar(-1));
 
-            //- Non-orthogonal correction loop
+            volScalarField CinvA(cEqn.A()*(scalar(1)/aEqn.A()));
+
+            fvScalarMatrix eq2
+            (
+                fvm::laplacian(m, V)
+                -fvm::laplacian(-z2*CinvA*C, V)
+                ==
+                - CinvA*(fvc::div(fvc::flux(-z2*C*fvc::grad(V))) + aEqn.H())
+                + cEqn.H()
+            );
+            eq2.solve();
+
+            C.storePrevIter();
+            fvScalarMatrix eq1
+            (
+                fvm::ddt(C) + fvm::div(fvc::flux(-z2*fvc::grad(V)), C) + fvm::laplacian(-a, C)
+                // ==
+                // fvc::div(fvc::flux(-z2*C*fvc::grad(C.prevIter() - C)))
+
+            );
+            eq1.solve();
+
             // C.storePrevIter();
+            // V.storePrevIter();
+            // C.correctBoundaryConditions();
+            // V.correctBoundaryConditions();
 
-            while ( pimple.correctNonOrthogonal() )
-            {
-                fvScalarMatrix CEqn
-                (
-                    fvm::ddt(C)
-                  // + fvm::div(phi, C, "div(phi,C)") // convective flux
-                  + fvm::div(phiNP, C, "div(phiNP,C)")
-                  - fvm::laplacian(a, C, "laplacian(a,C)")
-                  // ==
-                  // - fvm::Sp(LC,C) // controllare se Su va a destra del termine ==
-                  // + LC*C.prevIter()
-                );
-
-                // CEqn.relax();
-                CEqn.solve();
-                // C.relax();
-                // C.correctBoundaryConditions();
-            }
-
-            Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
+            // Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
             Info << "\n" << endl;
         }
 

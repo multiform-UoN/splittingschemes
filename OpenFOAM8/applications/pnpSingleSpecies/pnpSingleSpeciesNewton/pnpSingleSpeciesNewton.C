@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
             }
 
             //- Evaluate specific Nerst-Plank flux
-            phiNP = fvc::flux( -z2 * fvc::grad(V) );
+            phiNP = fvc::flux( z2 * fvc::grad(V.prevIter()) );
             // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
 
             // scalar CoNum = 0.0;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
             // Info<< "Courant Number mean: " << meanCoNum << " max: " << CoNum << endl;
 
             //- Non-orthogonal correction loop
-            // C.storePrevIter();
+            C.storePrevIter();
 
             while ( pimple.correctNonOrthogonal() )
             {
@@ -101,8 +101,10 @@ int main(int argc, char *argv[])
                 (
                     fvm::ddt(C)
                   // + fvm::div(phi, C, "div(phi,C)") // convective flux
-                  + fvm::div(phiNP, C, "div(phiNP,C)")
+                  - fvm::div(phiNP, C, "div(phiNP,C)")
                   - fvm::laplacian(a, C, "laplacian(a,C)")
+                  ==
+                  fvc::div(fvc::flux(z2*C*fvc::grad(V-V.prevIter())))
                   // ==
                   // - fvm::Sp(LC,C) // controllare se Su va a destra del termine ==
                   // + LC*C.prevIter()

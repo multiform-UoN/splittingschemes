@@ -1,3 +1,0 @@
-quadLaplacianFoam.C
-
-EXE = $(FOAM_USER_APPBIN)/quadLaplacianFoam

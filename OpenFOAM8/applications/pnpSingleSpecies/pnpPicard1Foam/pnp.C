@@ -57,32 +57,26 @@ int main(int argc, char *argv[])
 
         while ( pimple.loop() ) // coupling loop
         {
-            //-Update charge density
             rho *= scalar(0); //- Simply reset to zero
             rho += z1*C;
 
             V.storePrevIter();
-            //- Solve Poisson
             while ( pimple.correctNonOrthogonal() )
             {
                 // V.storePrevIter();
-                fvScalarMatrix VEqn
+                fvScalarMatrix CEqn
                 (
-                    fvm::laplacian(m, V)
-                    ==
-                    - rho
-                    // - fvm::Sp(LV,V) // controllare se Su va a destra del termine ==
+                    fvm::ddt(C)
+                    - fvm::laplacian(a, C, "laplacian(a,C)")
+                    - fvm::div(fvc::flux(z2*fvc::grad(V)), C, "div(phiNP,C)")
                 );
 
-                // VEqn.setReference(VRefCell, VRefValue);
-                // VEqn.relax();
-                VEqn.solve();
-                // V.relax();
+                CEqn.solve();
                 // V.correctBoundaryConditions();
             }
 
             //- Evaluate specific Nerst-Plank flux
-            phiNP = fvc::flux( -z2 * fvc::grad(V) );
+            // phiNP = fvc::flux( -z2 * fvc::grad(V) );
             // const surfaceScalarField phiNP("phiNP", -fvc::flux(fvc::grad(V))*(Dphi)*Z);
 
             // scalar CoNum = 0.0;
@@ -97,19 +91,15 @@ int main(int argc, char *argv[])
 
             while ( pimple.correctNonOrthogonal() )
             {
-                fvScalarMatrix CEqn
+                fvScalarMatrix VEqn
                 (
-                    fvm::ddt(C)
-                  // + fvm::div(phi, C, "div(phi,C)") // convective flux
-                  + fvm::div(phiNP, C, "div(phiNP,C)")
-                  - fvm::laplacian(a, C, "laplacian(a,C)")
-                  // ==
-                  // - fvm::Sp(LC,C) // controllare se Su va a destra del termine ==
-                  // + LC*C.prevIter()
+                    fvm::laplacian(m, V)
+                    ==
+                    -z1*C
                 );
 
                 // CEqn.relax();
-                CEqn.solve();
+                VEqn.solve();
                 // C.relax();
                 // C.correctBoundaryConditions();
             }
