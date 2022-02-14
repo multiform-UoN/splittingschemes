@@ -50,48 +50,16 @@ int main(int argc, char *argv[])
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
+        fvScalarMatrix Aeqn(fvm::laplacian(m, V));
+        fvScalarMatrix Ceqn(fvm::Sp(1.0, V));
+
+        volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+
         while ( pimple.loop() ) // coupling loop
         {
+            solve( fvm::laplacian(epsilonsquare, V) - fvm::ddt(CinvA, V) == -CinvA*Aeqn.H() + U*(U-scalar(1.0)) );
 
-            while ( pimple.correctNonOrthogonal() )
-            {
-                // V.storePrevIter();
-                fvScalarMatrix VEqn
-                (
-                    fvm::laplacian(m, V)
-                    == 
-                    fvc::ddt(U)
-                );
-
-                // VEqn.setReference(VRefCell, VRefValue);
-                // VEqn.relax();
-                VEqn.solve();
-                // V.relax();
-                V.correctBoundaryConditions();
-            }
-
-            // V.storePrevIter();
-            dW = U*U*U - U;
-
-            while ( pimple.correctNonOrthogonal() )
-            {
-                fvScalarMatrix UEqn
-                (
-                    fvm::laplacian(epsilonsquare, U, "laplacian(epsilonsquare,U)")
-                    // - fvm::Sp(ddW, U)
-                    ==
-                    // - ddW*U.prevIter()
-                    dW
-                    - V
-                );
-
-                // CEqn.relax();
-                UEqn.solve();
-                // C.relax();
-                U.correctBoundaryConditions();
-            }
-
-            // U.storePrevIter();
+            solve( fvm::laplacian(m, U) == fvc::ddt(V));
 
 /*            Info << "Concentration  = " << Foam::gSum(U().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
             Info << "\n" << endl;*/
@@ -99,7 +67,7 @@ int main(int argc, char *argv[])
 
         // Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
         runTime.write();
-        // Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
+        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 
     Info<< "End\n" << endl;

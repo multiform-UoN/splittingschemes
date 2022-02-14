@@ -25,41 +25,6 @@ volScalarField U
     mesh
 );
 
-volScalarField dW
-(
-    IOobject
-    (
-        "dW",
-        runTime.timeName(),
-        mesh,
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
-    ),
-    mesh,
-    dimensionedScalar(
-        "dW",
-        dimensionSet(0,0,0,0,0,0,0),
-        scalar(0)
-    )
-);
-
-volScalarField ddW
-(
-    IOobject
-    (
-        "ddW",
-        runTime.timeName(),
-        mesh,
-        IOobject::NO_READ,
-        IOobject::NO_WRITE
-    ),
-    mesh,
-    dimensionedScalar(
-        "ddW",
-        dimensionSet(0,0,0,0,0,0,0),
-        scalar(0)
-    )
-);
 
 // label VRefCell = 0;
 // scalar VRefValue = 0.0;
