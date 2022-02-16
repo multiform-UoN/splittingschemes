@@ -44,73 +44,30 @@ int main(int argc, char *argv[])
 
     #include "createFields.H"
 
-    volScalarField uOld
-    (
-        IOobject
-        (
-            "u",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh
-    );
-
-    volScalarField vOld
-    (
-        IOobject
-        (
-            "v",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh
-    );
-
-    uOld = u;
-    vOld = v;
-
-
+    volScalarField uOld(u);
+    volScalarField vOld(v);
 
     Info<< "\nStarting time loop\n" << endl;
     while (runTime.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
-        dimensionedScalar L("rho", dimensionSet(0,0,1,0,0,0,0), scalar(0));
-
-        // fvScalarMatrix Aeqn( fvm::laplacian(mA, u) );
-        // fvScalarMatrix Beqn( fvm::laplacian(mB, v) );
-        // fvScalarMatrix Ceqn( fvm::laplacian(mC, u) );
-        // fvScalarMatrix Deqn( fvm::laplacian(mD, v) );
-
-        // volScalarField CinvA(Ceqn.A()*(scalar(1)/Aeqn.A()));
-
+        // dimensionedScalar L("rho", dimensionSet(0,0,1,0,0,0,0), scalar(0));
 
         while ( pimple.loop() )
         {
-            // solve(fvm::laplacian(mB, v) == - fvc::laplacian(mA, u));
-            // solve(fvm::laplacian(mC, u) == - fvc::laplacian(mD, u));
-
-
             solve(fvm::laplacian(mA, u) == - fvc::laplacian(mB, vOld));
-            uOld = u;
+
             solve(fvm::laplacian(mD, v) == - fvc::laplacian(mC, uOld));
+
+            uOld = u;
+
             vOld = v;
 
-            // V.correctBoundaryConditions();
-            // V.storePrevIter();
-
-
-            // Info << "Concentration  = " << Foam::gSum(U().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
-            // Info << "\n" << endl;
+            Info << endl;
         }
 
-        // Info << "Concentration  = " << Foam::gSum(C().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
         runTime.write();
-        // Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
+        Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 
     Info<< "End\n" << endl;

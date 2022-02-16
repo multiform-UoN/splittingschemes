@@ -45,33 +45,16 @@ int main(int argc, char *argv[])
     #include "createFields.H"
 
     Info<< "\nStarting time loop\n" << endl;
-
-    fvScalarMatrix Aeqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
-    fvScalarMatrix Beqn( fvm::Sp(-beta, v) );
-    fvScalarMatrix Ceqn( fvm::Sp(-beta, u) );
-    fvScalarMatrix Deqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
-
-    // fvScalarMatrix Aeqn( fvm::Sp(-beta, u) );
-    // fvScalarMatrix Beqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
-    // fvScalarMatrix Ceqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
-    // fvScalarMatrix Deqn( fvm::Sp(-beta, v) );
-
-    volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-
     while (runTime.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
+        // dimensionedScalar L("rho", dimensionSet(0,0,1,0,0,0,0), scalar(0));
 
         while ( pimple.loop() )
         {
-
-            // solve( fvm::Sp(-beta, v) - fvm::Sp(mv*CinvA, v) + fvm::laplacian(mv*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
-
-            // solve( fvm::Sp(-beta, u) == - (beta*v - fvc::laplacian(mv*v)) );
-
-            solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) - fvm::Sp(-beta*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
-
             solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*v );
+
+            solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta*u );
 
             Info << endl;
         }

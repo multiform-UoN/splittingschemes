@@ -1,3 +1,0 @@
-pnpSingleSpeciesNewton.C
-
-EXE = $(FOAM_USER_APPBIN)/pnpSingleSpeciesNewton

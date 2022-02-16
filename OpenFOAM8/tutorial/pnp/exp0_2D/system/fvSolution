@@ -20,11 +20,11 @@ conv 1e-10;
 
 solvers
 {
-    "V.*"
+    "u.*"
     {
         solver              PBiCGStab;
         preconditioner      FDIC;
-        smoother            DIC;
+        // smoother            DIC;
         tolerance           1e-12;
         relTol              0;
     }
@@ -34,12 +34,12 @@ solvers
     //     $V;
     // }
 
-    "C.*"
+    "v.*"
     {
         solver              PBiCGStab;
-        // preconditioner      DIC;//DILU;
         preconditioner      DILU;
-        smoother            DILU;
+        // preconditioner      FDIC;
+        // smoother            DILU;
         tolerance           1e-12;
         relTol              0;
     }
@@ -68,22 +68,22 @@ PIMPLE
     }
 }
 
-couplingControls
-{
-    nCorrectors                 5;
-    nNonOrthogonalCorrectors    0;
-    //VRefCell                  0;
-    //VRefValue                 0;
-}
+// couplingControls
+// {
+//     nCorrectors                 5;
+//     nNonOrthogonalCorrectors    0;
+//     //VRefCell                  0;
+//     //VRefValue                 0;
+// }
 
-relaxationFactors
-{
-    equations
-    {
-        "C.*"       1;
-        V           1;
-    }
-}
+// relaxationFactors
+// {
+//     equations
+//     {
+//         "C.*"       1;
+//         V           1;
+//     }
+// }
 
 
 

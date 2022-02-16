@@ -10,44 +10,13 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      fvSchemes;
+    location    "constant";
+    object      electrokineticProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-ddtSchemes
-{
-    //default         steadyState;
-    default         backward;
-}
-
-gradSchemes
-{
-    default         Gauss linear;
-}
-
-divSchemes
-{
-    default         none;
-    div(phi,v)      Gauss upwind;
-    div(phiNP,v)    Gauss upwind;
-
-}
-
-laplacianSchemes
-{
-    default         Gauss linear orthogonal;
-}
-
-interpolationSchemes
-{
-    default         linear;
-}
-
-snGradSchemes
-{
-    default         orthogonal;
-}
-
+mu      mu      [0 2 0 0 0 0 0]         1.0;
+mv      mv      [0 2 0 0 0 0 0]         1.0;
+beta    beta    [0 0 0 0 0 0 0]         1.0;
 
 // ************************************************************************* //

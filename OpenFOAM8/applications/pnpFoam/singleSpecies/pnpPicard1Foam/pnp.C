@@ -21,11 +21,16 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Application: chFoam
+Application
+pnpFlorinSchemeFoam
 
-Description: Cahn-Hilliard solver
+Description
+Transient solver for a single species transport with Nernst-Planck forcing
+and Poisson potential (electrostatic approximation).
+Coupling is implemented using th L scheme (from Florin Radu notes).
 
-Authors: Roberto Nuca, Nottingham (2021)
+Authors:
+Federico Municchi, Matteo Icardi, Roberto Nuca,  Nottingham (2021)
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
@@ -40,44 +45,49 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createMesh.H"
 
+    // Add pimple coupling controls
     pimpleControl pimple(mesh);
 
     #include "createFields.H"
 
     Info<< "\nStarting time loop\n" << endl;
-
-    fvScalarMatrix Aeqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
-    fvScalarMatrix Beqn( fvm::Sp(-beta, v) );
-    fvScalarMatrix Ceqn( fvm::Sp(-beta, u) );
-    fvScalarMatrix Deqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
-
-    // fvScalarMatrix Aeqn( fvm::Sp(-beta, u) );
-    // fvScalarMatrix Beqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
-    // fvScalarMatrix Ceqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
-    // fvScalarMatrix Deqn( fvm::Sp(-beta, v) );
-
-    volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-
     while (runTime.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        while ( pimple.loop() )
+        while ( pimple.loop() ) // coupling loop
         {
+            rho *= scalar(0); //- Simply reset to zero
+            rho += z1*v;
 
-            // solve( fvm::Sp(-beta, v) - fvm::Sp(mv*CinvA, v) + fvm::laplacian(mv*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
+            while ( pimple.correctNonOrthogonal() )
+            {
+                fvScalarMatrix eqn1( fvm::laplacian(m, u) == -z1*v );
 
-            // solve( fvm::Sp(-beta, u) == - (beta*v - fvc::laplacian(mv*v)) );
+                // eqn1.relax();
+                eqn1.solve();
+                // eqn1.relax();
+                // eqn1.correctBoundaryConditions();
+            }
 
-            solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) - fvm::Sp(-beta*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
+            // u.storePrevIter();
+            while ( pimple.correctNonOrthogonal() )
+            {
+                fvScalarMatrix eqn2
+                (
+                    fvm::ddt(v)
+                    - fvm::laplacian(a, v, "laplacian(a,v)")
+                    - fvm::div(fvc::flux(z2*fvc::grad(u)), v, "div(phiNP,v)")
+                );
 
-            solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*v );
+                eqn2.solve();
+            }
 
-            Info << endl;
+            Info << "Concentration  = " << Foam::gSum(v().field()*mesh.V())/Foam::gSum(mesh.V()) << endl;
+            Info << "\n" << endl;
         }
 
         runTime.write();
-
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 
