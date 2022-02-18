@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     fvScalarMatrix Deqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
 
     volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+    volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
 
     while (runTime.loop())
     {
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 
             solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) - fvm::Sp(-beta*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
 
-            solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*v );
+            solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) - fvm::Sp(-beta*BinvD, u) == Beqn.H() - BinvD*Deqn.H() );
 
             Info << endl;
         }

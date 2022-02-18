@@ -44,14 +44,28 @@ int main(int argc, char *argv[])
 
     #include "createFields.H"
 
+    volScalarField diff
+    (
+        IOobject
+        (
+            "diff",
+            runTime.timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh
+    );
+
     Info<< "\nStarting time loop\n" << endl;
 
-    fvScalarMatrix Aeqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
-    fvScalarMatrix Beqn( fvm::Sp(-beta, v) );
-    fvScalarMatrix Ceqn( fvm::Sp(-beta, u) );
-    fvScalarMatrix Deqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
+    fvScalarMatrix Aeqn( fvm::laplacian(mA, u) );
+    fvScalarMatrix Beqn( fvm::laplacian(mB, v) );
+    fvScalarMatrix Ceqn( fvm::laplacian(mC, u) );
+    fvScalarMatrix Deqn( fvm::laplacian(mD, v) );
 
     volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+    volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
 
     while (runTime.loop())
     {
@@ -59,10 +73,9 @@ int main(int argc, char *argv[])
 
         while ( pimple.loop() )
         {
+            solve( fvm::laplacian(mD, v) - fvm::laplacian(mB*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
 
-            solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) - fvm::Sp(-beta*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
-
-            solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*v );
+            solve( fvm::laplacian(mA, u) - fvm::laplacian(mC*BinvD, u) == Beqn.H() - BinvD*Deqn.H() );
 
             Info << endl;
         }
