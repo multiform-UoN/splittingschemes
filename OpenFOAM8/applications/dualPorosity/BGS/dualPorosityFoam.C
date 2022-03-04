@@ -37,31 +37,26 @@ Authors: Roberto Nuca, Nottingham (2021)
 int main(int argc, char *argv[])
 {
     #include "setRootCaseLists.H"
+
     #include "createTime.H"
+
     #include "createMesh.H"
 
     pimpleControl pimple(mesh);
 
     #include "createFields.H"
 
-    volScalarField uOld(u);
-    volScalarField vOld(v);
-
     Info<< "\nStarting time loop\n" << endl;
+
     while (runTime.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
-        // dimensionedScalar L("rho", dimensionSet(0,0,1,0,0,0,0), scalar(0));
 
         while ( pimple.loop() )
         {
-            solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*vOld );
+            solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*v );
 
-            solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta*uOld );
-
-            uOld = u;
-
-            vOld = v;
+            solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta*u );
 
             Info << endl;
         }

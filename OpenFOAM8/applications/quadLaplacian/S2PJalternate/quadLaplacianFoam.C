@@ -37,35 +37,16 @@ Authors: Roberto Nuca, Nottingham (2021)
 int main(int argc, char *argv[])
 {
     #include "setRootCaseLists.H"
+
     #include "createTime.H"
+
     #include "createMesh.H"
 
     pimpleControl pimple(mesh);
 
     #include "createFields.H"
 
-    volScalarField diff
-    (
-        IOobject
-        (
-            "diff",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh
-    );
-
     Info<< "\nStarting time loop\n" << endl;
-
-    fvScalarMatrix Aeqn( fvm::laplacian(mA, u) );
-    fvScalarMatrix Beqn( fvm::laplacian(mB, v) );
-    fvScalarMatrix Ceqn( fvm::laplacian(mC, u) );
-    fvScalarMatrix Deqn( fvm::laplacian(mD, v) );
-
-    volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-    volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
 
     while (runTime.loop())
     {
@@ -73,7 +54,19 @@ int main(int argc, char *argv[])
 
         while ( pimple.loop() )
         {
+            fvScalarMatrix Aeqn( fvm::laplacian(mA, u) );
+
+            fvScalarMatrix Ceqn( fvm::laplacian(mC, u) );
+
+            volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+
             solve( fvm::laplacian(mD, v) - fvm::laplacian(mB*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
+
+            fvScalarMatrix Beqn( fvm::laplacian(mB, v) );
+
+            fvScalarMatrix Deqn( fvm::laplacian(mD, v) );
+
+            volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
 
             solve( fvm::laplacian(mA, u) - fvm::laplacian(mC*BinvD, u) == Beqn.H() - BinvD*Deqn.H() );
 

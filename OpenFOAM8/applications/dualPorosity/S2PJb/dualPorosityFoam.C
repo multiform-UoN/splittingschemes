@@ -37,7 +37,9 @@ Authors: Roberto Nuca, Nottingham (2021)
 int main(int argc, char *argv[])
 {
     #include "setRootCaseLists.H"
+
     #include "createTime.H"
+
     #include "createMesh.H"
 
     pimpleControl pimple(mesh);
@@ -46,19 +48,17 @@ int main(int argc, char *argv[])
 
     Info<< "\nStarting time loop\n" << endl;
 
-    fvScalarMatrix Aeqn( fvm::Sp(-beta, u) );
-    fvScalarMatrix Beqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
-    fvScalarMatrix Ceqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
-    fvScalarMatrix Deqn( fvm::Sp(-beta, v) );
-
-    volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-
     while (runTime.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         while ( pimple.loop() )
         {
+            fvScalarMatrix Aeqn( fvm::Sp(-beta, u) );
+
+            fvScalarMatrix Ceqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
+
+            volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
 
             solve( fvm::Sp(-beta, v) - fvm::Sp(mv*CinvA, v) + fvm::laplacian(mv*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
 
