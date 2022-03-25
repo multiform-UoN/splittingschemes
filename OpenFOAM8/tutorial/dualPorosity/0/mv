@@ -9,18 +9,30 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      transportProperties;
+    class       volScalarField;
+    object      mv;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-beta    beta    [0 0 0 0 0 0 0]    1.0;
+dimensions      [0 2 0 0 0 0 0];
 
-// method  "Block-Jacobi";
-method  "Block-Gauss-Seidel";
-// method  "S2PJ-alternate";
-// method  "S2PJ-a";
-// method  "S2PJ-b"; // NOT WORKING DUE TO A DIMENSIONS PROBLEM
+val 2.0;
+
+internalField   uniform $val;
+
+boundaryField
+{
+    "left|right|top|bottom"
+    {
+        // type            calculated;
+        type            fixedValue;
+        value           uniform     $val;
+    }
+
+    frontAndBack
+    {
+        type            empty;
+    }
+}
 
 // ************************************************************************* //

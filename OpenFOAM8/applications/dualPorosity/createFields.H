@@ -26,6 +26,32 @@ volScalarField v
     mesh
 );
 
+volScalarField mu
+(
+    IOobject
+    (
+        "mu",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
+volScalarField mv
+(
+    IOobject
+    (
+        "mv",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
 Info<< "Reading transportProperties\n" << endl;
 IOdictionary transportProperties
 (
@@ -38,10 +64,6 @@ IOdictionary transportProperties
         IOobject::NO_WRITE
     )
 );
-
-const dimensionedScalar mu ( transportProperties.lookup("mu") );
-
-const dimensionedScalar mv ( transportProperties.lookup("mv") );
 
 const dimensionedScalar beta ( transportProperties.lookup("beta") );
 
