@@ -26,7 +26,6 @@ volScalarField v
     mesh
 );
 
-
 Info<< "Reading transportProperties\n" << endl;
 IOdictionary transportProperties
 (
@@ -40,6 +39,10 @@ IOdictionary transportProperties
     )
 );
 
-const dimensionedScalar mu(transportProperties.lookup("mu"));
-const dimensionedScalar mv(transportProperties.lookup("mv"));
-const dimensionedScalar beta(transportProperties.lookup("beta"));
+const dimensionedScalar mu ( transportProperties.lookup("mu") );
+
+const dimensionedScalar mv ( transportProperties.lookup("mv") );
+
+const dimensionedScalar beta ( transportProperties.lookup("beta") );
+
+const word method ( transportProperties.lookup("method") );
