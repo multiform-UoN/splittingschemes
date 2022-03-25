@@ -37,36 +37,73 @@ Authors: Roberto Nuca, Nottingham (2021)
 int main(int argc, char *argv[])
 {
     #include "setRootCaseLists.H"
+
     #include "createTime.H"
+
     #include "createMesh.H"
 
     pimpleControl pimple(mesh);
 
     #include "createFields.H"
 
-    volScalarField uOld(u);
-    volScalarField vOld(v);
-
     Info<< "\nStarting time loop\n" << endl;
+
     while (runTime.loop())
     {
         Info<< "Time = " << runTime.timeName() << nl << endl;
-        // dimensionedScalar L("rho", dimensionSet(0,0,1,0,0,0,0), scalar(0));
 
-        while ( pimple.loop() )
+        if (method=="Block-Jacobi")
         {
-            solve(fvm::laplacian(mA, u) == - fvc::laplacian(mB, vOld));
-
-            solve(fvm::laplacian(mD, v) == - fvc::laplacian(mC, uOld));
-
-            uOld = u;
-
-            vOld = v;
-
-            Info << endl;
+            volScalarField uOld(u);
+            volScalarField vOld(v);
+            while ( pimple.loop() )
+            {
+                solve(fvm::laplacian(muu, u) == - fvc::laplacian(muv, vOld));
+                solve(fvm::laplacian(mvv, v) == - fvc::laplacian(mvu, uOld));
+                uOld = u;
+                vOld = v;
+                Info << endl;
+            }
+        }
+        else if (method=="Block-Gauss-Seidel")
+        {
+            while ( pimple.loop() )
+            {
+                solve(fvm::laplacian(muu, u) == - fvc::laplacian(muv, v));
+                solve(fvm::laplacian(mvv, v) == - fvc::laplacian(mvu, u));            
+                Info << endl;
+            }
+        }
+        else if (method=="S2PJ-alternate")
+        {
+            while ( pimple.loop() )
+            {
+                fvScalarMatrix Aeqn( fvm::laplacian(muu, u) );
+                fvScalarMatrix Ceqn( fvm::laplacian(mvu, u) );
+                volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+                solve( fvm::laplacian(mvv, v) - fvm::laplacian(muv*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
+                fvScalarMatrix Beqn( fvm::laplacian(muv, v) );
+                fvScalarMatrix Deqn( fvm::laplacian(mvv, v) );
+                volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
+                solve( fvm::laplacian(muu, u) - fvm::laplacian(mvu*BinvD, u) == Beqn.H() - BinvD*Deqn.H() );
+                Info << endl;
+            }
+        }
+        else if (method=="S2PJ-a")
+        {
+            while ( pimple.loop() )
+            {
+                fvScalarMatrix Aeqn( fvm::laplacian(muu, u) );
+                fvScalarMatrix Ceqn( fvm::laplacian(mvu, u) );
+                volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+                solve( fvm::laplacian(mvv, v) - fvm::laplacian(muv*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
+                solve( fvm::laplacian(muu, u) == - fvc::laplacian(muv*v) );
+                Info << endl;
+            }
         }
 
         runTime.write();
+
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 

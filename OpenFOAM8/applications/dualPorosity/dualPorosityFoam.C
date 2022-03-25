@@ -68,8 +68,7 @@ int main(int argc, char *argv[])
                 Info << endl;
             }
         }
-
-        if (method=="Block-Gauss-Seidel")
+        else if (method=="Block-Gauss-Seidel")
         {
             while ( pimple.loop() )
             {
@@ -78,8 +77,7 @@ int main(int argc, char *argv[])
                 Info << endl;
             }
         }
-
-        if (method=="S2PJ-alternate")
+        else if (method=="S2PJ-alternate")
         {
             while ( pimple.loop() )
             {
@@ -94,8 +92,7 @@ int main(int argc, char *argv[])
                 Info << endl;
             }
         }
-
-        if (method=="S2PJ-a")
+        else if (method=="S2PJ-a")
         {
             while ( pimple.loop() )
             {
@@ -107,8 +104,7 @@ int main(int argc, char *argv[])
                 Info << endl;
             }
         }
-
-        if (method=="S2PJ-b")
+        else if (method=="S2PJ-b")
         {
             while ( pimple.loop() )
             {

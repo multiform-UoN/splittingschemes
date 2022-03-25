@@ -26,6 +26,57 @@ volScalarField v
     mesh
 );
 
+volScalarField muu
+(
+    IOobject
+    (
+        "muu",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
+volScalarField muv
+(
+    IOobject
+    (
+        "muv",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
+volScalarField mvu
+(
+    IOobject
+    (
+        "mvu",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
+
+volScalarField mvv
+(
+    IOobject
+    (
+        "mvv",
+        runTime.timeName(),
+        mesh,
+        IOobject::MUST_READ,
+        IOobject::AUTO_WRITE
+    ),
+    mesh
+);
 
 Info<< "Reading transportProperties\n" << endl;
 IOdictionary transportProperties
@@ -40,8 +91,6 @@ IOdictionary transportProperties
     )
 );
 
-const dimensionedScalar mA(transportProperties.lookup("mA"));
-const dimensionedScalar mB(transportProperties.lookup("mB"));
-const dimensionedScalar mC(transportProperties.lookup("mC"));
-const dimensionedScalar mD(transportProperties.lookup("mD"));
+// const dimensionedScalar mA(transportProperties.lookup("mA"));
 
+const word method ( transportProperties.lookup("method") );
