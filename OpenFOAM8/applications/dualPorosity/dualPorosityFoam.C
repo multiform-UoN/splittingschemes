@@ -23,7 +23,7 @@ along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application: chFoam
 
-Description: Cahn-Hilliard solver
+Description: Dual Porosity solver
 
 Authors: Roberto Nuca, Nottingham (2021)
 \*---------------------------------------------------------------------------*/
