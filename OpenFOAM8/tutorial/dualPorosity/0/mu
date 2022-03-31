@@ -18,36 +18,55 @@ dimensions      [0 2 0 0 0 0 0];
 
 val 1.0;
 
-internalField   uniform $val;
+// internalField   uniform $val;
 
-// mvInit  #codeStream
-// {
-//         code
-//         #{
-//             const IOdictionary& d = static_cast<const IOdictionary&>(dict);
-//             const fvMesh& mesh = refCast<const fvMesh>(d.db());
-//             scalarField fld
-//             (
-//               (
-//               scalar(0.1)
-//               *
-//               Foam::cos(scalar(2.)*pi*mesh.C().component(0))
-//               *
-//               Foam::cos(scalar(2.)*pi*mesh.C().component(1))
-//               //+
-//               //scalar(1)
-//               )
-//               ///
-//               //scalar(2)
-//             );
-//             writeEntry(os,"",fld);
-//         #};
+muInternal  #codeStream
+{
+    {
+        codeInclude
+        #{
+            #include "fvCFD.H"
+        #};
+
+        codeOptions
+        #{
+            -I$(LIB_SRC)/finiteVolume/lnInclude \
+            -I$(LIB_SRC)/meshTools/lnInclude
+        #};
+
+        codeLibs
+        #{
+            -lmeshTools \
+            -lfiniteVolume
+        #};
+
+        code
+        #{
+            const IOdictionary& d = static_cast<const IOdictionary&>(dict);
+            const fvMesh& mesh = refCast<const fvMesh>(d.db());
+            scalarField fld
+            (
+              (
+              scalar(0.1)
+              *
+              Foam::cos(scalar(2.)*pi*mesh.C().component(0))
+              *
+              Foam::cos(scalar(2.)*pi*mesh.C().component(1))
+              //+
+              //scalar(1)
+              )
+              ///
+              //scalar(2)
+            );
+            writeEntry(os,"",fld);
+        #};
 
 
-//         #inputMode merge
-// };
+        #inputMode merge
+    };
+}
 
-// internalField $mvInit;
+internalField $muInternal;
 
 boundaryField
 {
