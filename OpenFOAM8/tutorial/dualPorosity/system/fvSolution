@@ -35,7 +35,7 @@ PIMPLE
 {
 
     nNonOrthogonalCorrectors 0;
-    nOuterCorrectors 100;
+    nOuterCorrectors 10000;
 
     outerCorrectorResidualControl
     {

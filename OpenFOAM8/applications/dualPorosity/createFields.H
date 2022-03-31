@@ -66,5 +66,6 @@ IOdictionary transportProperties
 );
 
 const dimensionedScalar beta ( transportProperties.lookup("beta") );
+Info << "exchange coefficients beta " << beta << endl;
 
 const word method ( transportProperties.lookup("method") );

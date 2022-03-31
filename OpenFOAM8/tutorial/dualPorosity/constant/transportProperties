@@ -15,11 +15,11 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-beta    beta    [0 0 0 0 0 0 0]    1.0;
+beta    beta    [0 0 0 0 0 0 0]    1e-8;
 
 // method  "Block-Jacobi";
-method  "Block-Gauss-Seidel";
-// method  "S2PJ-alternate";
+// method  "Block-Gauss-Seidel";
+method  "S2PJ-alternate";
 // method  "S2PJ-a";
 // method  "S2PJ-b"; // NOT WORKING DUE TO A DIMENSIONS PROBLEM
 

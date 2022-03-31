@@ -57,14 +57,14 @@ int main(int argc, char *argv[])
 
         if (method=="Block-Jacobi")
         {
+            volScalarField uOld(u);
+            volScalarField vOld(v);
             while ( pimple.loop() )
             {
-                volScalarField uOld(u);
-                volScalarField vOld(v);
-                solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*vOld );
-                solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta*uOld );
                 uOld = u;
                 vOld = v;
+                solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*vOld );
+                solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta*uOld );
                 Info << endl;
             }
         }
@@ -72,8 +72,10 @@ int main(int argc, char *argv[])
         {
             while ( pimple.loop() )
             {
-                solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*v );
-                solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta*u );
+                // Au = beta*v --> Au = beta*(-Cu/D.A + D.H/D.A) = 
+                solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta*v ); // pEqn == tau*p_fr
+                // Dv = -Cu  --> D.Av - D.H = -Cu -->  v = -Cu/D.A + D.H/D.A
+                solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta*u ); // p_frEqn == tau*p
                 Info << endl;
             }
         }
@@ -83,11 +85,13 @@ int main(int argc, char *argv[])
             {
                 fvScalarMatrix Aeqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
                 fvScalarMatrix Ceqn( fvm::Sp(-beta, u) );
-                volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+                volScalarField CinvA("CinvA",Ceqn.A()*(scalar(1.0)/Aeqn.A()));
+                CinvA.write();
                 solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) - fvm::Sp(-beta*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
                 fvScalarMatrix Beqn( fvm::Sp(-beta, v) );
                 fvScalarMatrix Deqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
-                volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
+                volScalarField BinvD("BinvD",Beqn.A()*(scalar(1.0)/Deqn.A()));
+                BinvD.write();
                 solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) - fvm::Sp(-beta*BinvD, u) == Beqn.H() - BinvD*Deqn.H() );
                 Info << endl;
             }
