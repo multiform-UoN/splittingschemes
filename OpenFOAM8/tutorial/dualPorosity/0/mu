@@ -20,8 +20,7 @@ val 1.0;
 
 // internalField   uniform $val;
 
-muInternal  #codeStream
-{
+internalField  #codeStream
     {
         codeInclude
         #{
@@ -49,9 +48,9 @@ muInternal  #codeStream
               (
               scalar(0.1)
               *
-              Foam::cos(scalar(2.)*pi*mesh.C().component(0))
+              Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(0)->primitiveField())
               *
-              Foam::cos(scalar(2.)*pi*mesh.C().component(1))
+              Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(1)->primitiveField())
               //+
               //scalar(1)
               )
@@ -61,12 +60,7 @@ muInternal  #codeStream
             writeEntry(os,"",fld);
         #};
 
-
-        #inputMode merge
     };
-}
-
-internalField $muInternal;
 
 boundaryField
 {
