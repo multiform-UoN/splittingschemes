@@ -45,9 +45,9 @@ internalField  #codeStream
               (
                 11                
                 *
-                Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(0)->primitiveField())
+                Foam::sin(scalar(2.)*constant::mathematical::pi*mesh.C().component(0)->primitiveField())
                 *
-                Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(1)->primitiveField())
+                Foam::sin(scalar(2.)*constant::mathematical::pi*mesh.C().component(1)->primitiveField())
                 -
                 36
               )

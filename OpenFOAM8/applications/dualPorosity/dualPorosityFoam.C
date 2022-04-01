@@ -79,21 +79,30 @@ int main(int argc, char *argv[])
                 Info << endl;
             }
         }
-        else if (method=="S2PJ-alternate")
+        else if (method=="S3PJ-alternate")
         {
             while ( pimple.loop() )
             {
-                fvScalarMatrix Aeqn( fvm::Sp( beta, u) - fvm::laplacian(mu, u) );
-                fvScalarMatrix Ceqn( fvm::Sp(-beta, u) );
-                volScalarField CinvA("CinvA",Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-                CinvA.write();
-                solve( fvm::Sp(beta, v) - fvm::laplacian(mv, v) - fvm::Sp(-beta*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
-                fvScalarMatrix Beqn( fvm::Sp(-beta, v) );
-                fvScalarMatrix Deqn( fvm::Sp( beta, v) - fvm::laplacian(mv, v) );
-                volScalarField BinvD("BinvD",Beqn.A()*(scalar(1.0)/Deqn.A()));
-                BinvD.write();
-                solve( fvm::Sp(beta, u) - fvm::laplacian(mu, u) - fvm::Sp(-beta*BinvD, u) == Beqn.H() - BinvD*Deqn.H() );
+                {
+                    #include "ABCDEqn.H"
+                    solve( Aeqn - fvm::Sp(Beqn.A()*Ceqn.A()/Deqn.A(), u) == Beqn.H() - Beqn.A()*(Deqn.H()+Ceqn.H())/Deqn.A() );
+                }
+                {
+                    #include "ABCDEqn.H"
+                    solve( Deqn - fvm::Sp(Ceqn.A()*Beqn.A()/Aeqn.A(), v) == Ceqn.H() - Ceqn.A()*(Aeqn.H()+Beqn.H())/Aeqn.A() );
+                }
                 Info << endl;
+            }
+        }
+        else if (method=="S2PJ-alternate") // TO BE DONE, AS IT'S WRITTEN NOW IT'S WRONG BUT PERHAPS WE CAN USE HERE H1() TO FIX IT
+        {
+            while ( pimple.loop() )
+            {
+                // #include "ABCDEqn.H"
+                // solve( Aeqn - Beqn*Ceqn.A()/Deqn.A() == Beqn.H() - Beqn.A()*Deqn.H()/Deqn.A() );
+                // #include "ABCDEqn.H"
+                // solve( Deqn - Ceqn*Beqn.A()/Aeqn.A() == Ceqn.H() - Ceqn.A()*Aeqn.H()/Aeqn.A() );
+                // Info << endl;
             }
         }
         else if (method=="S2PJ-a")
