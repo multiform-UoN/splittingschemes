@@ -20,25 +20,25 @@ internalField   uniform 0;
 
 boundaryField
 {
-    left
+    top
     {
         type            fixedValue;
         value           uniform 5e5;
     }
 
-    right
+    bottom
     {
         type            fixedValue;
         value           uniform 0;
     }
 
-    top
+    left
     {
         type    zeroGradient;
         // type            noFlux;
     }
 
-    bottom
+    right
     {
         type    zeroGradient;
         // type            noFlux;
