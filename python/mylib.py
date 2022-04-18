@@ -33,6 +33,7 @@ def laplacian(nu, leftBC, rightBC, N, dx, L, kwargs):
 
     return sparse.diags([diag/np.square(dx), lower/np.square(dx), upper/np.square(dx)], [0, -1, 1]), fBC
 
+# second order accuracy reconstructor for cell faces
 def reconstruct(sol):
     n = len(sol)
     rec = np.zeros(n+1)
