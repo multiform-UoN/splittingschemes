@@ -1,14 +1,16 @@
 import numpy as np
 import scipy.sparse as sparse
+import scipy.linalg as linalg
+from scipy import stats
 
-def laplacian(nu, leftBC, rightBC, N, dx, L, kwargs):
+def fvm_laplacian_1D(nu, leftBC, rightBC, N, dx, L, kwargs):
     fBC = np.zeros(N)
     diag = np.zeros(N)
     lower = np.zeros(N-1)
     upper = np.zeros(N-1)
     
     for k in range(N): #k=0,1,...,N-1
-        if k==0:
+        if k==0: #first cell
             if leftBC.get('type')=='dirichlet':
                 diag[0] = -(3.5*nu(0.0, kwargs) + nu(dx, kwargs))
                 upper[0] =  0.5*nu(0.0, kwargs) + nu(dx, kwargs)
@@ -17,7 +19,7 @@ def laplacian(nu, leftBC, rightBC, N, dx, L, kwargs):
                 diag[0] = -nu(dx, kwargs)
                 upper[0] = nu(dx, kwargs)
                 fBC[k] = nu(0.0, kwargs)*leftBC.get('value')/dx #cambio di segno perchè a dx dell'=
-        elif k==N-1:
+        elif k==N-1: #last cell
             if rightBC.get('type')=='dirichlet':
                 diag[N-1] = -(3.5*nu(L, kwargs) + nu(L-dx, kwargs))
                 lower[N-2] =  0.5*nu(L, kwargs) + nu(L-dx, kwargs)
@@ -34,7 +36,7 @@ def laplacian(nu, leftBC, rightBC, N, dx, L, kwargs):
     return sparse.diags([diag/np.square(dx), lower/np.square(dx), upper/np.square(dx)], [0, -1, 1]), fBC
 
 # second order accuracy reconstructor for cell faces
-def reconstruct(sol):
+def fvm_reconstruct_1D(sol):
     n = len(sol)
     rec = np.zeros(n+1)
     for i,val in enumerate(rec):
@@ -45,3 +47,124 @@ def reconstruct(sol):
         else:
             rec[i] = 0.5*(sol[i-1]+sol[i])
     return rec
+
+
+def slope(res):
+    x = np.arange(len(res))
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x,np.log10(res))
+    return slope
+
+
+
+
+
+def method_BlockJacobi(A, B, C, D, f1, f2, nit, L, sol):
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    u0 = np.zeros(A.shape[0])
+    v0 = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        u = linalg.solve(A + L*np.eye(A.shape[0]), f1 - np.dot(B, v0) + L*u)
+        v = linalg.solve(D, f2 - np.dot(C, u0))
+        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        u0 = u
+        v0 = v
+    return u, v, np.array(res)
+
+def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, L, sol):
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        u = linalg.solve(A + L*np.eye(A.shape[0]), f1 - np.dot(B, v) + L*u)
+        v = linalg.solve(D, f2 - np.dot(C, u))
+        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+    return u, v, np.array(res)
+
+def method_BlockSOR(A, B, C, D, f1, f2, nit, alpha, sol):
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        delta_u = linalg.solve(A, f1 - np.dot(A, u) - np.dot(B, v))
+        u = u + alpha*delta_u
+        delta_v = linalg.solve(D, f2 - np.dot(C, u) - np.dot(D, v))
+        v = v + delta_v
+        #v = v + alpha*delta_v # this affects the choice of alpha
+        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+    return u, v, np.array(res)
+
+def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, L, sol):
+    DD    = np.diag(D.diagonal(),0)
+    invDD = np.diag(1/D.diagonal(),0)
+    #u = np.zeros(A.shape[0])
+    #v = np.zeros(A.shape[0])
+    u = 100*np.random.rand(A.shape[0])
+    v = 100*np.random.rand(A.shape[0])
+    res = []
+    for i in range(nit):
+        u = linalg.solve(
+            A  - np.dot(B, np.dot(invDD ,C)) , 
+            f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v)))
+        )
+        v = linalg.solve(D, f2 - np.dot(C,u))
+        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+    return u, v, np.array(res)
+
+def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol):
+    DD    = np.diag(D.diagonal(),0)
+    invDD = np.diag(1/D.diagonal(),0)
+    BB    = np.diag(B.diagonal(),0)
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    #u = 100*np.random.rand(A.shape[0])
+    #v = 100*np.random.rand(A.shape[0])
+    res = []
+    for i in range(nit):
+        u = linalg.solve(
+            A  - np.dot(BB, np.dot(invDD ,C)), 
+            f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v))) + np.dot(B-BB,np.dot(invDD,np.dot(C,u)))
+        )
+        v = linalg.solve(D, f2 - np.dot(C,u))
+        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+    return u, v, np.array(res)
+
+
+
+
+
+
+def approxInverse(A, n):
+    Id = np.eye(A.shape[0])
+    invA = Id
+    prev = Id-A
+    for i in range(n):
+        invA = invA + prev
+        prev = np.dot(prev, Id-A)
+    return invA
+
+def approxInverseEpsilon(A, n, epsilon):
+    Id = np.eye(A.shape[0])
+    invA = Id
+    prev = Id-epsilon*A
+    for i in range(n):
+        invA = invA + prev
+        prev = np.dot(prev, Id-epsilon*A)
+    return epsilon*invA
+
+def method_ShurApproxinv(A, B, C, D, f1, f2, nit, sol, N, epsilon):
+    invA = approxInverseEpsilon(A, N, epsilon)
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        v = linalg.solve(
+            A - np.dot(C, np.dot(invA ,D)), 
+            f2 - np.dot(B, np.dot(C, np.dot(invA, f1)))
+        )
+        v = linalg.solve(A, f1 - np.dot(B, v))
+        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+    return u, v, np.array(res)
+
+
