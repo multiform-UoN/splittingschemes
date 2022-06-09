@@ -98,10 +98,8 @@ def method_BlockSOR(A, B, C, D, f1, f2, nit, alpha, sol):
 def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, L, sol):
     DD    = np.diag(D.diagonal(),0)
     invDD = np.diag(1/D.diagonal(),0)
-    #u = np.zeros(A.shape[0])
-    #v = np.zeros(A.shape[0])
-    u = 100*np.random.rand(A.shape[0])
-    v = 100*np.random.rand(A.shape[0])
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
     res = []
     for i in range(nit):
         u = linalg.solve(
@@ -118,8 +116,6 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol):
     BB    = np.diag(B.diagonal(),0)
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
-    #u = 100*np.random.rand(A.shape[0])
-    #v = 100*np.random.rand(A.shape[0])
     res = []
     for i in range(nit):
         u = linalg.solve(
@@ -129,6 +125,30 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol):
         v = linalg.solve(D, f2 - np.dot(C,u))
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
     return u, v, np.array(res)
+
+
+
+
+
+def method_ShurPrecond(A, B, C, D, f1, f2, nit, L, sol):
+    #sA = sparse.csc_matrix(D)
+    #sA_iLU = sparse.linalg.spilu(sA)
+    #M = sparse.linalg.LinearOperator((A.shape[0],A.shape[0]), sA_iLU.solve)
+    #invDD = M.toarray()
+    DD    = np.diag(D.diagonal(),0)
+    invDD = np.diag(1/D.diagonal(),0)
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        u = linalg.solve(
+            A  - np.dot(B, np.dot(invDD ,C)) , 
+            f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v)))
+        )
+        v = linalg.solve(D, f2 - np.dot(C,u))
+        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+    return u, v, np.array(res)
+
 
 
 
@@ -155,6 +175,7 @@ def approxInverseEpsilon(A, n, epsilon):
 
 def method_ShurApproxinv(A, B, C, D, f1, f2, nit, sol, N, epsilon):
     invA = approxInverseEpsilon(A, N, epsilon)
+    #invA = 2.0*np.diag(1/A.diagonal(),0) - np.dot(np.diag(1/A.diagonal(),0),np.dot(A,np.diag(1/A.diagonal(),0)))
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     res = []
@@ -167,4 +188,16 @@ def method_ShurApproxinv(A, B, C, D, f1, f2, nit, sol, N, epsilon):
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
     return u, v, np.array(res)
 
+def solveApproxInv(A, b, x0, nit, N, epsilon):
+    x = x0
+    AA = epsilon*A
+    operator = np.eye(A.shape[0])
+    prev = np.eye(A.shape[0])
+    for i in range(N):
+        operator = operator + prev*AA
+        prev = prev*AA
+    
+    for i in range(nit):
+        x = np.dot(operator, x - epsilon*b)
 
+    return x
