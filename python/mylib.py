@@ -14,20 +14,20 @@ def fvm_laplacian_1D(nu, leftBC, rightBC, N, dx, L, kwargs):
             if leftBC.get('type')=='dirichlet':
                 diag[0] = -(3.5*nu(0.0, kwargs) + nu(dx, kwargs))
                 upper[0] =  0.5*nu(0.0, kwargs) + nu(dx, kwargs)
-                fBC[k] = -3.0*nu(0.0, kwargs)*leftBC.get('value')/np.square(dx) #cambio di segno perchè a dx dell'=
+                fBC[k] = -3.0*nu(0.0, kwargs)*leftBC.get('value')/np.square(dx) #cambio di segno perchè è termine noto
             if leftBC.get('type')=='neumann':
                 diag[0] = -nu(dx, kwargs)
                 upper[0] = nu(dx, kwargs)
-                fBC[k] = nu(0.0, kwargs)*leftBC.get('value')/dx #cambio di segno perchè a dx dell'=
+                fBC[k] = nu(0.0, kwargs)*leftBC.get('value')/dx #cambio di segno perchè è termine noto
         elif k==N-1: #last cell
             if rightBC.get('type')=='dirichlet':
                 diag[N-1] = -(3.5*nu(L, kwargs) + nu(L-dx, kwargs))
                 lower[N-2] =  0.5*nu(L, kwargs) + nu(L-dx, kwargs)
-                fBC[k] = -3.0*nu(L, kwargs)*rightBC.get('value')/np.square(dx) #cambio di segno perchè a dx dell'=
+                fBC[k] = -3.0*nu(L, kwargs)*rightBC.get('value')/np.square(dx) #cambio di segno perchè è termine noto
             elif rightBC.get('type')=='neumann':
                 diag[N-1] = -nu(L-dx, kwargs)
                 lower[N-2] = nu(L-dx, kwargs)
-                fBC[k] = -nu(L, kwargs)*rightBC.get('value')/dx #cambio di segno perchè a dx dell'=
+                fBC[k] = -nu(L, kwargs)*rightBC.get('value')/dx #cambio di segno perchè è termine noto
         else: #k=1,2,3,...,N-2
             diag[k] = -(nu(k*dx, kwargs) + nu((k+1)*dx, kwargs))
             lower[k-1] = nu(k*dx, kwargs)
@@ -49,14 +49,11 @@ def fvm_reconstruct_1D(sol):
     return rec
 
 
-def slope(res):
-    x = np.arange(len(res))
-    slope, intercept, r_value, p_value, std_err = stats.linregress(x,np.log10(res))
+def slope(residual):
+    """compute the slope of the error function in log scale"""
+    x = np.arange(len(residual))
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x,np.log10(residual))
     return slope
-
-
-
-
 
 def method_BlockJacobi(A, B, C, D, f1, f2, nit, L, sol):
     u = np.zeros(A.shape[0])
