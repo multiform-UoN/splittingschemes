@@ -48,66 +48,79 @@ def fvm_reconstruct_1D(sol):
             rec[i] = 0.5*(sol[i-1]+sol[i])
     return rec
 
-
 def slope(residual):
     """compute the slope of the error function in log scale"""
     x = np.arange(len(residual))
     slope, intercept, r_value, p_value, std_err = stats.linregress(x,np.log10(residual))
     return slope
 
-def method_BlockJacobi(A, B, C, D, f1, f2, nit, L, sol):
+def method_BlockJacobi(A, B, C, D, f1, f2, nit, L, sol, toll):
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     u0 = np.zeros(A.shape[0])
     v0 = np.zeros(A.shape[0])
     res = []
+    nitfinal = 0
     for i in range(nit):
+        nitfinal += 1
         u = linalg.solve(A + L*np.eye(A.shape[0]), f1 - np.dot(B, v0) + L*u)
         v = linalg.solve(D, f2 - np.dot(C, u0))
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
         u0 = u
         v0 = v
-    return u, v, np.array(res)
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
 
-def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, L, sol):
+def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, L, sol, toll):
+    nitfinal = 0
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     res = []
     for i in range(nit):
+        nitfinal += 1
         u = linalg.solve(A + L*np.eye(A.shape[0]), f1 - np.dot(B, v) + L*u)
         v = linalg.solve(D, f2 - np.dot(C, u))
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
-    return u, v, np.array(res)
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
 
-def method_BlockSOR(A, B, C, D, f1, f2, nit, alpha, sol):
+def method_BlockSOR(A, B, C, D, f1, f2, nit, alpha, sol, toll):
+    nitfinal = 0
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     res = []
     for i in range(nit):
+        nitfinal += 1
         delta_u = linalg.solve(A, f1 - np.dot(A, u) - np.dot(B, v))
         u = u + alpha*delta_u
         delta_v = linalg.solve(D, f2 - np.dot(C, u) - np.dot(D, v))
         v = v + delta_v
         #v = v + alpha*delta_v # this affects the choice of alpha
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
-    return u, v, np.array(res)
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
 
-def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, L, sol):
+def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, L, sol, toll):
+    nitfinal = 0
     DD    = np.diag(D.diagonal(),0)
     invDD = np.diag(1/D.diagonal(),0)
+    AA    = np.diag(A.diagonal(),0)
+    invAA = np.diag(1/A.diagonal(),0)
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     res = []
     for i in range(nit):
-        u = linalg.solve(
-            A  - np.dot(B, np.dot(invDD ,C)) , 
-            f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v)))
-        )
-        v = linalg.solve(D, f2 - np.dot(C,u))
+        nitfinal += 1
+        u = linalg.solve(A - np.dot(B, np.dot(invDD ,C)), f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v))))
+        v = linalg.solve(D - np.dot(C, np.dot(invAA ,C)), f2 - np.dot(B, np.dot(invAA, f1 - np.dot(A-AA, u))))
+        # v = linalg.solve(D, f2 - np.dot(C,u))
+        # u = linalg.solve(A, f1 - np.dot(B,v))
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
-    return u, v, np.array(res)
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
 
-def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol):
+def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol, toll):
+    nitfinal = 0
     DD    = np.diag(D.diagonal(),0)
     invDD = np.diag(1/D.diagonal(),0)
     BB    = np.diag(B.diagonal(),0)
@@ -115,13 +128,20 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol):
     v = np.zeros(A.shape[0])
     res = []
     for i in range(nit):
-        u = linalg.solve(
-            A  - np.dot(BB, np.dot(invDD ,C)), 
-            f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v))) + np.dot(B-BB,np.dot(invDD,np.dot(C,u)))
-        )
+        nitfinal += 1
+        u = linalg.solve(A - np.dot(BB, np.dot(invDD ,C)), f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v))) + np.dot(B-BB,np.dot(invDD,np.dot(C,u))))
         v = linalg.solve(D, f2 - np.dot(C,u))
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
-    return u, v, np.array(res)
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
+
+
+
+
+
+
+
+
 
 
 
@@ -145,11 +165,6 @@ def method_ShurPrecond(A, B, C, D, f1, f2, nit, L, sol):
         v = linalg.solve(D, f2 - np.dot(C,u))
         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
     return u, v, np.array(res)
-
-
-
-
-
 
 
 def approxInverse(A, n):
