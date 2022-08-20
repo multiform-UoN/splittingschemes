@@ -1,0 +1,42 @@
+// summary of ensight parts
+
+ensightCells
+{
+    id              1;
+    name            "cells";
+    offset          0;
+    size            5712;
+}
+
+ensightFaces
+{
+    id              2;
+    name            "patch1";
+    offset          15316;
+    size            2440;
+}
+
+ensightFaces
+{
+    id              3;
+    name            "patch2";
+    offset          17756;
+    size            348;
+}
+
+ensightFaces
+{
+    id              4;
+    name            "patch3";
+    offset          18104;
+    size            96;
+}
+
+ensightFaces
+{
+    id              5;
+    name            "patch4";
+    offset          18200;
+    size            384;
+}
+

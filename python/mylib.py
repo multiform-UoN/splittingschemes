@@ -3,7 +3,8 @@ import scipy.sparse as sparse
 import scipy.linalg as linalg
 from scipy import stats
 
-def fvm_laplacian_1D(nu, leftBC, rightBC, N, dx, L, kwargs):
+def fvm_laplacian_1D(nu, leftBC, rightBC, N, L, kwargs):
+    dx = np.divide(L, N)
     fBC = np.zeros(N)
     diag = np.zeros(N)
     lower = np.zeros(N-1)
@@ -11,20 +12,20 @@ def fvm_laplacian_1D(nu, leftBC, rightBC, N, dx, L, kwargs):
     
     for k in range(N): #k=0,1,...,N-1
         if k==0: #first cell
-            if leftBC.get('type')=='dirichlet':
+            if leftBC['type']=='dirichlet':
                 diag[0] = -(3.5*nu(0.0, kwargs) + nu(dx, kwargs))
                 upper[0] =  0.5*nu(0.0, kwargs) + nu(dx, kwargs)
                 fBC[k] = -3.0*nu(0.0, kwargs)*leftBC.get('value')/np.square(dx) #cambio di segno perchè è termine noto
-            if leftBC.get('type')=='neumann':
+            if leftBC['type']=='neumann':
                 diag[0] = -nu(dx, kwargs)
                 upper[0] = nu(dx, kwargs)
                 fBC[k] = nu(0.0, kwargs)*leftBC.get('value')/dx #cambio di segno perchè è termine noto
         elif k==N-1: #last cell
-            if rightBC.get('type')=='dirichlet':
+            if rightBC['type']=='dirichlet':
                 diag[N-1] = -(3.5*nu(L, kwargs) + nu(L-dx, kwargs))
                 lower[N-2] =  0.5*nu(L, kwargs) + nu(L-dx, kwargs)
                 fBC[k] = -3.0*nu(L, kwargs)*rightBC.get('value')/np.square(dx) #cambio di segno perchè è termine noto
-            elif rightBC.get('type')=='neumann':
+            elif rightBC['type']=='neumann':
                 diag[N-1] = -nu(L-dx, kwargs)
                 lower[N-2] = nu(L-dx, kwargs)
                 fBC[k] = -nu(L, kwargs)*rightBC.get('value')/dx #cambio di segno perchè è termine noto
@@ -65,7 +66,8 @@ def method_BlockJacobi(A, B, C, D, f1, f2, nit, L, sol, toll):
         nitfinal += 1
         u = linalg.solve(A + L*np.eye(A.shape[0]), f1 - np.dot(B, v0) + L*u)
         v = linalg.solve(D, f2 - np.dot(C, u0))
-        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        # res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        res.append(np.sqrt(np.square(np.linalg.norm(f1-np.dot(A,u)-np.dot(B,v)))+np.square(np.linalg.norm(f2-np.dot(C,u)-np.dot(D,v)))))
         u0 = u
         v0 = v
         if res[-1] < toll: break
@@ -80,7 +82,8 @@ def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, L, sol, toll):
         nitfinal += 1
         u = linalg.solve(A + L*np.eye(A.shape[0]), f1 - np.dot(B, v) + L*u)
         v = linalg.solve(D, f2 - np.dot(C, u))
-        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        # res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        res.append(np.sqrt(np.square(np.linalg.norm(f1-np.dot(A,u)-np.dot(B,v)))+np.square(np.linalg.norm(f2-np.dot(C,u)-np.dot(D,v)))))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
 
@@ -96,7 +99,8 @@ def method_BlockSOR(A, B, C, D, f1, f2, nit, alpha, sol, toll):
         delta_v = linalg.solve(D, f2 - np.dot(C, u) - np.dot(D, v))
         v = v + delta_v
         #v = v + alpha*delta_v # this affects the choice of alpha
-        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        # res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        res.append(np.sqrt(np.square(np.linalg.norm(f1-np.dot(A,u)-np.dot(B,v)))+np.square(np.linalg.norm(f2-np.dot(C,u)-np.dot(D,v)))))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
 
@@ -115,7 +119,8 @@ def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, L, sol, toll):
         v = linalg.solve(D - np.dot(C, np.dot(invAA ,C)), f2 - np.dot(B, np.dot(invAA, f1 - np.dot(A-AA, u))))
         # v = linalg.solve(D, f2 - np.dot(C,u))
         # u = linalg.solve(A, f1 - np.dot(B,v))
-        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        # res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        res.append(np.sqrt(np.square(np.linalg.norm(f1-np.dot(A,u)-np.dot(B,v)))+np.square(np.linalg.norm(f2-np.dot(C,u)-np.dot(D,v)))))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
 
@@ -123,6 +128,8 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol, toll):
     nitfinal = 0
     DD    = np.diag(D.diagonal(),0)
     invDD = np.diag(1/D.diagonal(),0)
+    AA    = np.diag(D.diagonal(),0)
+    invAA = np.diag(1/D.diagonal(),0)
     BB    = np.diag(B.diagonal(),0)
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
@@ -131,7 +138,8 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, sol, toll):
         nitfinal += 1
         u = linalg.solve(A - np.dot(BB, np.dot(invDD ,C)), f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v))) + np.dot(B-BB,np.dot(invDD,np.dot(C,u))))
         v = linalg.solve(D, f2 - np.dot(C,u))
-        res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        # res.append(np.linalg.norm(sol - np.concatenate((u,v))))
+        res.append(np.sqrt(np.square(np.linalg.norm(f1-np.dot(A,u)-np.dot(B,v)))+np.square(np.linalg.norm(f2-np.dot(C,u)-np.dot(D,v)))))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
 

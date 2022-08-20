@@ -34,14 +34,22 @@ boundaryField
 
     top
     {
-        type    zeroGradient;
+        // type    zeroGradient;
+
         // type            noFlux;
+        
+        type        fixedGradient;
+        gradient       0.5;
     }
 
     bottom
     {
-        type    zeroGradient;
+        // type    zeroGradient;
+
         // type            noFlux;
+
+        type            fixedValue;
+        value           uniform 0;
     }
 
     frontAndBack

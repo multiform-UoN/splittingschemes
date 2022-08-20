@@ -1,0 +1,16 @@
+FORMAT
+type: ensight gold
+
+GEOMETRY
+model:        1     explicitLaplacian.0000.mesh
+
+VARIABLE
+scalar per element:            1       T               explicitLaplacian.****.T
+
+TIME
+time set:                      1
+number of steps:               1
+filename start number:         0
+filename increment:            1
+time values:
+0.00000e+00  

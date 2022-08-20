@@ -2,7 +2,6 @@ jupyter
 scipy
 numpy
 matplotlib
-ipython
 pandas
 sympy
 nose
