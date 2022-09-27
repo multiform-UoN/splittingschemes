@@ -56,8 +56,8 @@ def slope(residual):
     return slope
 
 def method_BlockJacobi(A, B, C, D, f1, f2, nit, L, sol, toll):
-    u = np.zeros(A.shape[0])
-    v = np.zeros(A.shape[0])
+    u  = np.zeros(A.shape[0])
+    v  = np.zeros(A.shape[0])
     u0 = np.zeros(A.shape[0])
     v0 = np.zeros(A.shape[0])
     res = []
