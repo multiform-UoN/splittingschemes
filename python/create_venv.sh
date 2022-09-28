@@ -1,5 +1,5 @@
 envname="venv_splitting"
-python="python3.8"
+python="python3"
 
 rm -rf $envname
 
@@ -11,7 +11,6 @@ $python -m pip install -r requirements.txt
 
 deactivate
 
-clear
 echo ""
 echo "use the command 'source $envname/bin/activate' in this directory to source the virtual environment!!!"
 echo ""
