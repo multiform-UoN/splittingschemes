@@ -181,23 +181,23 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll):
     for i in range(nit):
         nitfinal += 1
 
-        # ALTERNATE
-        u = sparse.linalg.spsolve(
-            A - sparse.csc_matrix(np.dot(BB, np.dot(invDD ,C.toarray()))),
-            f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v))) + np.dot(B.toarray()-BB,np.dot(invDD,np.dot(C.toarray(),u)))
-            )
-        v = sparse.linalg.spsolve(
-            D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
-            f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
-            )
-
-
-        # # APPROXIMATED SHUR ON u
+        # # ALTERNATE
         # u = sparse.linalg.spsolve(
         #     A - sparse.csc_matrix(np.dot(BB, np.dot(invDD ,C.toarray()))),
         #     f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v))) + np.dot(B.toarray()-BB,np.dot(invDD,np.dot(C.toarray(),u)))
         #     )
-        # v = sparse.linalg.spsolve(D, f2 - np.dot(C.toarray(),u))
+        # v = sparse.linalg.spsolve(
+        #     D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
+        #     f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
+        #     )
+
+
+        # APPROXIMATED SHUR ON u
+        u = sparse.linalg.spsolve(
+            A - sparse.csc_matrix(np.dot(BB, np.dot(invDD ,C.toarray()))),
+            f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v))) + np.dot(B.toarray()-BB,np.dot(invDD,np.dot(C.toarray(),u)))
+            )
+        v = sparse.linalg.spsolve(D, f2 - np.dot(C.toarray(),u))
 
 
         # # APPROXIMATED SHUR ON v
@@ -216,6 +216,31 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll):
             )
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
