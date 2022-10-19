@@ -119,6 +119,43 @@ def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, toll):
 #         if res[-1] < toll: break
 #     return u, v, np.array(res), nitfinal
 
+def method_Lscheme(A, B, C, D, f1, f2, nit, toll, type, L):
+    nitfinal = 0
+    AA    = np.diag(A.diagonal(),0)
+    invAA = np.diag(1/A.diagonal(),0)
+    DD    = np.diag(D.diagonal(),0)
+    invDD = np.diag(1/D.diagonal(),0)
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        nitfinal += 1
+
+        # L on both
+        if type=='both':
+            u = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+A, f1 + L*u - np.dot(B.toarray(),v))
+            v = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+D, f2 + L*v - np.dot(C.toarray(),u))
+        
+        # L on u
+        if type=='L_on_u':
+            u = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+A, f1 - np.dot(B.toarray(),v) + L*u)
+            v = sparse.linalg.spsolve(D, f2 - np.dot(C.toarray(),u))
+
+        # L on v
+        if type=='L_on_v':
+            v = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+D, f2 - np.dot(C.toarray(),u) + L*v)
+            u = sparse.linalg.spsolve(A, f1 - np.dot(B.toarray(),v))
+
+        res.append(
+            np.sqrt(
+                np.square(np.linalg.norm(f1-np.dot(A.toarray(),u)-np.dot(B.toarray(),v)))
+                +
+                np.square(np.linalg.norm(f2-np.dot(C.toarray(),u)-np.dot(D.toarray(),v)))
+                )
+            )
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
+
 def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, toll, type):
     nitfinal = 0
     AA    = np.diag(A.diagonal(),0)
