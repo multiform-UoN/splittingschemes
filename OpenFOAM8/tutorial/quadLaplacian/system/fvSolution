@@ -16,14 +16,14 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 tol 1e-16;
-conv 1e-10;
+conv 1e-8;
 
 solvers
 {
     ".*"
     {
-        solver              PBiCGStab;
-        preconditioner      FDIC; //DILU;
+        solver              PCG;
+        preconditioner      DIC; //DILU;
         smoother            DIC;
         tolerance           1e-12;
         relTol              0;
@@ -35,7 +35,7 @@ PIMPLE
 {
 
     nNonOrthogonalCorrectors 0;
-    nOuterCorrectors 100;
+    nOuterCorrectors 10000;
 
     outerCorrectorResidualControl
     {
@@ -66,8 +66,7 @@ relaxationFactors
 {
     equations
     {
-        "C.*"       1;
-        "V.*"       1;
+        ".*"       1;
     }
 }
 

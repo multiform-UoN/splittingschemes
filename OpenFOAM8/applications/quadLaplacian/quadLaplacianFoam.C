@@ -58,8 +58,8 @@ int main(int argc, char *argv[])
             volScalarField vOld(v);
             while ( pimple.loop() )
             {
-                solve(fvm::laplacian(muu, u) == - fvc::laplacian(muv, vOld));
-                solve(fvm::laplacian(mvv, v) == - fvc::laplacian(mvu, uOld));
+                solve(-fvm::laplacian(muu, u) ==  fvc::laplacian(muv, vOld));
+                solve(-fvm::laplacian(mvv, v) ==  fvc::laplacian(mvu, uOld));
                 uOld = u;
                 vOld = v;
                 Info << endl;
@@ -69,8 +69,8 @@ int main(int argc, char *argv[])
         {
             while ( pimple.loop() )
             {
-                solve(fvm::laplacian(muu, u) == - fvc::laplacian(muv, v));
-                solve(fvm::laplacian(mvv, v) == - fvc::laplacian(mvu, u));            
+                solve(-fvm::laplacian(muu, u) ==  fvc::laplacian(muv, v));
+                solve(-fvm::laplacian(mvv, v) ==  fvc::laplacian(mvu, u));            
                 Info << endl;
             }
         }
