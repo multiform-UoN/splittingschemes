@@ -3,6 +3,20 @@ import scipy.sparse as sparse
 import scipy.linalg as linalg
 from scipy import stats
 
+def format_func(value, tick_number):
+    # find number of multiples of pi/2
+    N = int(np.round(2 * value / np.pi))
+    if N == 0:
+        return "0"
+    elif N == 1:
+        return r"$\pi/2$"
+    elif N == 2:
+        return r"$\pi$"
+    elif N % 2 > 0:
+        return r"${0}\pi/2$".format(N)
+    else:
+        return r"${0}\pi$".format(N // 2)
+
 def fvm_laplacian_1D(nu, leftBC, rightBC, N, L, kwargs):
     dx = np.divide(L, N)
     fBC = np.zeros(N)
