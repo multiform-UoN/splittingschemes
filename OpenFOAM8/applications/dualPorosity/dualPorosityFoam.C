@@ -105,11 +105,11 @@ int main(int argc, char *argv[])
         {
             while ( pimple.loop() )
             {
-                // #include "ABCDEqn.H"
-                // solve( Aeqn - Beqn*Ceqn.A()/Deqn.A() == Beqn.H() - Beqn.A()*Deqn.H()/Deqn.A() );
-                // #include "ABCDEqn.H"
-                // solve( Deqn - Ceqn*Beqn.A()/Aeqn.A() == Ceqn.H() - Ceqn.A()*Aeqn.H()/Aeqn.A() );
-                // Info << endl;
+                //#include "ABCDEqn.H"
+                //solve( Aeqn - Beqn*(Ceqn.A()/Deqn.A()) == Beqn.H() - Beqn.A()*Deqn.H()/Deqn.A() );
+                //#include "ABCDEqn.H"
+                //solve( Deqn - Ceqn*(Beqn.A()/Aeqn.A()) == Ceqn.H() - Ceqn.A()*Aeqn.H()/Aeqn.A() );
+                //Info << endl;
             }
         }
         else if (method=="S2PJ-a")

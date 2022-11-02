@@ -41,15 +41,16 @@ internalField  #codeStream
             const fvMesh& mesh = refCast<const fvMesh>(d.db());
             scalarField fld
             (
-              Foam::exp
+              Foam::pow
               (
-                11                
+                10.0,
+                -2
+                +
+                0.0 
                 *
                 Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(0)->primitiveField())
                 *
                 Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(1)->primitiveField())
-                -
-                36
               )
             );
             writeEntry(os,"",fld);

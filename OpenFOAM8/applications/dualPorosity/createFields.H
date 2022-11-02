@@ -65,7 +65,21 @@ IOdictionary transportProperties
     )
 );
 
-const dimensionedScalar beta ( transportProperties.lookup("beta") );
-Info << "exchange coefficients beta " << beta << endl;
+const dimensionedScalar beta0 ( transportProperties.lookup("beta") );
+Info << "exchange coefficients beta " << beta0 << endl;
+
+volScalarField beta
+(
+    IOobject
+    (
+        "beta",
+        runTime.timeName(),
+        mesh,
+        IOobject::READ_IF_PRESENT,
+        IOobject::AUTO_WRITE
+    ),
+    mesh,
+    beta0
+);
 
 const word method ( transportProperties.lookup("method") );

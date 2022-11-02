@@ -16,48 +16,47 @@ FoamFile
 
 dimensions      [0 2 0 0 0 0 0];
 
-internalField     uniform 1e-11;
+//internalField     uniform 1e0;
 
-// internalField  #codeStream
-//     {
-//         codeInclude
-//         #{
-//             #include "fvCFD.H"
-//         #};
+ internalField  #codeStream
+     {
+         codeInclude
+         #{
+             #include "fvCFD.H"
+         #};
 
-//         codeOptions
-//         #{
-//             -I$(LIB_SRC)/finiteVolume/lnInclude \
-//             -I$(LIB_SRC)/meshTools/lnInclude
-//         #};
+         codeOptions
+         #{
+             -I$(LIB_SRC)/finiteVolume/lnInclude \
+             -I$(LIB_SRC)/meshTools/lnInclude
+         #};
 
-//         codeLibs
-//         #{
-//             -lmeshTools \
-//             -lfiniteVolume
-//         #};
+         codeLibs
+         #{
+             -lmeshTools \
+             -lfiniteVolume
+         #};
 
-//         code
-//         #{
-//             const IOdictionary& d = static_cast<const IOdictionary&>(dict);
-//             const fvMesh& mesh = refCast<const fvMesh>(d.db());
-//             scalarField fld
-//             (
-//               Foam::exp
-//               (
-//                 2
-//                 *
-//                 Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(0)->primitiveField())
-//                 *
-//                 Foam::cos(scalar(2.)*constant::mathematical::pi*mesh.C().component(1)->primitiveField())
-//                 -
-//                 8
-//               )
-//             );
-//             writeEntry(os,"",fld);
-//         #};
+         code
+         #{
+             const IOdictionary& d = static_cast<const IOdictionary&>(dict);
+             const fvMesh& mesh = refCast<const fvMesh>(d.db());
+             scalarField fld
+             (
+               Foam::pow
+               (
+                 10,
+                 4
+                 *
+                 Foam::sin(scalar(2.)*constant::mathematical::pi*mesh.C().component(0)->primitiveField())
+                 *
+                 Foam::sin(scalar(2.)*constant::mathematical::pi*mesh.C().component(1)->primitiveField())
+               )
+             );
+             writeEntry(os,"",fld);
+         #};
 
-//     };
+     };
 
 boundaryField
 {
