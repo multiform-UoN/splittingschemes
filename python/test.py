@@ -14,3 +14,9 @@ sB = 4.0*(sA.copy())
 
 
 print(np.dot(sA.toarray(), x))
+
+
+A = np.random.rand(2,5)
+print(A)
+x = np.random.rand(5)
+print(A@x)
