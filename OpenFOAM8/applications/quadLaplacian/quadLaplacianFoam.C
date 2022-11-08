@@ -58,6 +58,8 @@ int main(int argc, char *argv[])
             volScalarField vOld(v);
             while ( pimple.loop() )
             {
+                // Au = Bv
+                // Dv = Cu
                 solve(-fvm::laplacian(muu, u) ==  fvc::laplacian(muv, vOld));
                 solve(-fvm::laplacian(mvv, v) ==  fvc::laplacian(mvu, uOld));
                 uOld = u;
@@ -70,7 +72,7 @@ int main(int argc, char *argv[])
             while ( pimple.loop() )
             {
                 solve(-fvm::laplacian(muu, u) ==  fvc::laplacian(muv, v));
-                solve(-fvm::laplacian(mvv, v) ==  fvc::laplacian(mvu, u));            
+                solve(-fvm::laplacian(mvv, v) ==  fvc::laplacian(mvu, u));
                 Info << endl;
             }
         }
@@ -78,14 +80,14 @@ int main(int argc, char *argv[])
         {
             while ( pimple.loop() )
             {
-                fvScalarMatrix Aeqn( fvm::laplacian(muu, u) );
+                fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
                 fvScalarMatrix Ceqn( fvm::laplacian(mvu, u) );
                 volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-                solve( fvm::laplacian(mvv, v) - fvm::laplacian(muv*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
+                solve(-fvm::laplacian(mvv, v) - CinvA*fvm::laplacian(muv, v) == - Ceqn.H() + CinvA*Aeqn.H() );
                 fvScalarMatrix Beqn( fvm::laplacian(muv, v) );
-                fvScalarMatrix Deqn( fvm::laplacian(mvv, v) );
+                fvScalarMatrix Deqn(-fvm::laplacian(mvv, v) );
                 volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
-                solve( fvm::laplacian(muu, u) - fvm::laplacian(mvu*BinvD, u) == Beqn.H() - BinvD*Deqn.H() );
+                solve(-fvm::laplacian(muu, u) - BinvD*fvm::laplacian(mvu, u) == -Beqn.H() + BinvD*Deqn.H() );
                 Info << endl;
             }
         }
@@ -93,11 +95,13 @@ int main(int argc, char *argv[])
         {
             while ( pimple.loop() )
             {
-                fvScalarMatrix Aeqn( fvm::laplacian(muu, u) );
+                // Au = Bv -> AAu - AH = Bv -> u = (AH + Bv)/AA
+                // Dv = Cu -> Dv - CAu = -CH -> Dv - (CA/AA)*Bv = -CH + (CA/AA)*AH
+                fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
                 fvScalarMatrix Ceqn( fvm::laplacian(mvu, u) );
                 volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-                solve( fvm::laplacian(mvv, v) - fvm::laplacian(muv*CinvA, v) == Ceqn.H() - CinvA*Aeqn.H() );
-                solve( fvm::laplacian(muu, u) == - fvc::laplacian(muv*v) );
+                solve(-fvm::laplacian(mvv, v) - CinvA*fvm::laplacian(muv, v) == - Ceqn.H() + CinvA*Aeqn.H() );
+                solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv*v) );
                 Info << endl;
             }
         }

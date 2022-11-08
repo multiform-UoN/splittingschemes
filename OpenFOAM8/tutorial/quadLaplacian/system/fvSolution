@@ -16,15 +16,15 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 tol 1e-16;
-conv 1e-8;
+conv 1e-12;
 
 solvers
 {
     ".*"
     {
-        solver              PCG;
+        solver              GAMG;
         preconditioner      DIC; //DILU;
-        smoother            DIC;
+        smoother            GaussSeidel;
         tolerance           1e-12;
         relTol              0;
     }
