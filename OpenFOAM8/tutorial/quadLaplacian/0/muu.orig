@@ -46,7 +46,7 @@ val 1.0;
             const fvMesh& mesh = refCast<const fvMesh>(d.db());
             scalarField fld
              (
-               1
+               0
                +
                Foam::pow
                (
