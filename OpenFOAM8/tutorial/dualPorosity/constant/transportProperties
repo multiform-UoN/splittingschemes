@@ -18,10 +18,10 @@ FoamFile
 beta    beta    [0 0 0 0 0 0 0]    1e2;
 
 // method  "Block-Jacobi";
- method  "Block-Gauss-Seidel";
-//method "S3PJ-alternate";
-// method  "S2PJ-alternate";
-// method  "S2PJ-a";
-// method  "S2PJ-b"; // NOT WORKING DUE TO A DIMENSIONS PROBLEM
+// method  "Block-Gauss-Seidel";
+// method  "S3PJ-alternate";
+method  "S2PJ-alternate";
+// method  "S2PJ-v";
+// method  "S2PJ-u";
 
 // ************************************************************************* //

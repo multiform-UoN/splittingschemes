@@ -22,13 +22,13 @@ boundaryField
 {
     top
     {
-        type            zeroGradient;//fixedValue;
-        value           uniform 0;
+        type            fixedValue;
+        value           uniform 1;
     }
 
     bottom
     {
-        type            zeroGradient;//fixedValue;
+        type            fixedValue;
         value           uniform 0;
     }
 

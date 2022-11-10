@@ -36,140 +36,116 @@ Authors: Roberto Nuca, Nottingham (2021)
 
 int main(int argc, char *argv[])
 {
-  #include "setRootCaseLists.H"
+#include "setRootCaseLists.H"
 
-  #include "createTime.H"
+#include "createTime.H"
 
-  #include "createMesh.H"
+#include "createMesh.H"
 
-  pimpleControl pimple(mesh);
+    pimpleControl pimple(mesh);
 
-  #include "createFields.H"
+#include "createFields.H"
 
-  Info<< "\nStarting time loop\n" << endl;
+    Info << "\nStarting time loop\n"
+         << endl;
 
-  while (runTime.loop())
-  {
-    Info<< "Time = " << runTime.timeName() << nl << endl;
-
-    if (method=="Block-Jacobi")
+    while (runTime.loop())
     {
-      volScalarField uOld(u);
-      volScalarField vOld(v);
-      while ( pimple.loop() )
-      {
-        // Au = Bv
-        // Dv = Cu
-        solve(-fvm::laplacian(muu, u) ==  fvc::laplacian(muv, vOld));
-        solve(-fvm::laplacian(mvv, v) ==  fvc::laplacian(mvu, uOld));
-        uOld = u;
-        vOld = v;
-        Info << endl;
-      }
-    }
-    else if (method=="Block-Gauss-Seidel")
-    {
-      while ( pimple.loop() )
-      {
-        solve(-fvm::laplacian(muu, u) ==  fvc::laplacian(muv, v));
-        solve(-fvm::laplacian(mvv, v) ==  fvc::laplacian(mvu, u));
-        Info << endl;
-      }
-    }
-    else if (method=="S3PJ-alternate")
-    {
-      while ( pimple.loop() )
-      {
+        Info << "Time = " << runTime.timeName() << nl << endl;
+
+        if (method == "Block-Jacobi")
         {
-          fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
-          fvScalarMatrix Ceqn(-fvm::laplacian(mvu, u) );
-          fvScalarMatrix Beqn(-fvm::laplacian(muv, v) );
-          fvScalarMatrix Deqn(-fvm::laplacian(mvv, v) );
-          solve(
-            Aeqn - fvm::Sp(Beqn.A()*Ceqn.A()/Deqn.A(), u)
-            ==
-            Beqn.H() - Beqn.A()*(Deqn.H()+Ceqn.H())/Deqn.A()
-          );
+            volScalarField uOld(u);
+            volScalarField vOld(v);
+            while (pimple.loop())
+            {
+                // Au = Bv
+                // Dv = Cu
+                solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv, vOld));
+                solve(-fvm::laplacian(mvv, v) == fvc::laplacian(mvu, uOld));
+                uOld = u;
+                vOld = v;
+                Info << endl;
+            }
         }
+        else if (method == "Block-Gauss-Seidel")
         {
-          fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
-          fvScalarMatrix Ceqn(-fvm::laplacian(mvu, u) );
-          fvScalarMatrix Beqn(-fvm::laplacian(muv, v) );
-          fvScalarMatrix Deqn(-fvm::laplacian(mvv, v) );
-          solve(
-            Deqn - fvm::Sp(Ceqn.A()*Beqn.A()/Aeqn.A(), v)
-            ==
-            Ceqn.H() - Ceqn.A()*(Aeqn.H()+Beqn.H())/Aeqn.A()
-          );
+            while (pimple.loop())
+            {
+                solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv, v));
+                solve(-fvm::laplacian(mvv, v) == fvc::laplacian(mvu, u));
+                Info << endl;
+            }
         }
-        Info << endl;
-      }
-    }
-    else if (method=="S2PJ-alternate")
-    {
-      while ( pimple.loop() )
-      {
+        else if (method == "S3PJ-alternate")
         {
-          fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
-          fvScalarMatrix Ceqn(-fvm::laplacian(mvu, u) );
-          fvScalarMatrix Beqn(-fvm::laplacian(muv, v) );
-          fvScalarMatrix Deqn(-fvm::laplacian(mvv, v) );
-          solve
-          (
-            Deqn - (Ceqn.A()/Aeqn.A())*Beqn == Ceqn.H() - Ceqn.A()*Aeqn.H()/Aeqn.A()
-          );
+            while (pimple.loop())
+            {
+                {
+                    #include "ABCDEqn.H"
+                    solve(Aeqn - fvm::Sp(Beqn.A()*Ceqn.A() / Deqn.A(), u) == Beqn.H() - Beqn.A()*(Deqn.H() + Ceqn.H()) / Deqn.A());
+                }
+                {
+                    #include "ABCDEqn.H"
+                    solve(Deqn - fvm::Sp(Ceqn.A()*Beqn.A() / Aeqn.A(), v) == Ceqn.H() - Ceqn.A()*(Aeqn.H() + Beqn.H()) / Aeqn.A());
+                }
+                Info << endl;
+            }
         }
+        else if (method == "S2PJ-alternate")
         {
-          fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
-          fvScalarMatrix Ceqn(-fvm::laplacian(mvu, u) );
-          fvScalarMatrix Beqn(-fvm::laplacian(muv, v) );
-          fvScalarMatrix Deqn(-fvm::laplacian(mvv, v) );
-          solve
-          (
-            Aeqn - (Beqn.A()/Deqn.A())*Ceqn == Beqn.H() - Beqn.A()*Deqn.H()/Deqn.A()
-         );
+            while (pimple.loop())
+            {
+                {
+                    #include "ABCDEqn.H"
+                    solve(Deqn - (Ceqn.A() / Aeqn.A()) * Beqn == Ceqn.H() - Ceqn.A() * Aeqn.H() / Aeqn.A());
+                }
+                {
+                    #include "ABCDEqn.H"
+                    solve(Aeqn - (Beqn.A() / Deqn.A()) * Ceqn == Beqn.H() - Beqn.A() * Deqn.H() / Deqn.A());
+                }
+                Info << endl;
+            }
         }
-        Info << endl;
-      }
-    }
-    else if (method=="S2PJ-alternateExpl")
-    {
-      while ( pimple.loop() )
-      {
-        fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
-        fvScalarMatrix Ceqn( fvm::laplacian(mvu, u) );
-        volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-        solve(-fvm::laplacian(mvv, v) - CinvA*fvm::laplacian(muv, v) == - Ceqn.H() + CinvA*Aeqn.H() );
-        fvScalarMatrix Beqn( fvm::laplacian(muv, v) );
-        fvScalarMatrix Deqn(-fvm::laplacian(mvv, v) );
-        volScalarField BinvD(Beqn.A()*(scalar(1.0)/Deqn.A()));
-        solve(-fvm::laplacian(muu, u) - BinvD*fvm::laplacian(mvu, u) == -Beqn.H() + BinvD*Deqn.H() );
-        Info << endl;
-      }
-    }
-    else if (method=="S2PJ-a")
-    {
-      while ( pimple.loop() )
-      {
-        // Au = Bv -> AAu - AH = Bv -> u = (AH + Bv)/AA
-        // Dv = Cu -> Dv - CAu = -CH -> Dv - (CA/AA)*Bv = -CH + (CA/AA)*AH
-        fvScalarMatrix Aeqn(-fvm::laplacian(muu, u) );
-        fvScalarMatrix Ceqn( fvm::laplacian(mvu, u) );
-        volScalarField CinvA(Ceqn.A()*(scalar(1.0)/Aeqn.A()));
-        solve(-fvm::laplacian(mvv, v) - CinvA*fvm::laplacian(muv, v) == - Ceqn.H() + CinvA*Aeqn.H() );
-        solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv*v) );
-        Info << endl;
-      }
+        else if (method == "S2PJ-alternateExpl")
+        {
+            while (pimple.loop())
+            {
+                fvScalarMatrix Aeqn(-fvm::laplacian(muu, u));
+                fvScalarMatrix Ceqn(fvm::laplacian(mvu, u));
+                volScalarField CinvA(Ceqn.A() * (scalar(1.0) / Aeqn.A()));
+                solve(-fvm::laplacian(mvv, v) - CinvA * fvm::laplacian(muv, v) == -Ceqn.H() + CinvA * Aeqn.H());
+                fvScalarMatrix Beqn(fvm::laplacian(muv, v));
+                fvScalarMatrix Deqn(-fvm::laplacian(mvv, v));
+                volScalarField BinvD(Beqn.A() * (scalar(1.0) / Deqn.A()));
+                solve(-fvm::laplacian(muu, u) - BinvD * fvm::laplacian(mvu, u) == -Beqn.H() + BinvD * Deqn.H());
+                Info << endl;
+            }
+        }
+        else if (method == "S2PJ-a")
+        {
+            while (pimple.loop())
+            {
+                // Au = Bv -> AAu - AH = Bv -> u = (AH + Bv)/AA
+                // Dv = Cu -> Dv - CAu = -CH -> Dv - (CA/AA)*Bv = -CH + (CA/AA)*AH
+                fvScalarMatrix Aeqn(-fvm::laplacian(muu, u));
+                fvScalarMatrix Ceqn(fvm::laplacian(mvu, u));
+                volScalarField CinvA(Ceqn.A() * (scalar(1.0) / Aeqn.A()));
+                solve(-fvm::laplacian(mvv, v) - CinvA * fvm::laplacian(muv, v) == -Ceqn.H() + CinvA * Aeqn.H());
+                solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv * v));
+                Info << endl;
+            }
+        }
+
+        runTime.write();
+
+        Info << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
+             << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 
-    runTime.write();
-
-    Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s" << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
-  }
-
-  Info<< "End\n" << endl;
-  return 0;
+    Info << "End\n"
+         << endl;
+    return 0;
 }
-
 
 // ************************************************************************* //
