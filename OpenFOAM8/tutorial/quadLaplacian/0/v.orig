@@ -22,26 +22,31 @@ boundaryField
 {
     top
     {
-        type            fixedValue;
-        value           uniform 0;
+        // type            zeroGradient;
+        type            fixedGradient;
+        gradient        uniform -5;
     }
 
     bottom
     {
-        type            fixedValue;
-        value           uniform 0;
+        type            zeroGradient;
+        // type            fixedGradient;
+        // gradient        uniform -5;
+        // type            fixedValue;
+        // value           uniform 1;
     }
 
     left
     {
-        type    zeroGradient;
-        // type            noFlux;
+        // type            zeroGradient;
+        type            fixedValue;
+        value           uniform -1;
     }
 
     right
     {
-        type    zeroGradient;
-        // type            noFlux;
+        type            fixedValue;
+        value           uniform 1;
     }
 
     frontAndBack

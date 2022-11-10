@@ -16,9 +16,11 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // method  "Block-Jacobi";
-method  "Block-Gauss-Seidel";
-// method  "S2PJ-alternate";
-// method  "S2PJ-a";
+// method  "Block-Gauss-Seidel";
+// method  "S2PJ-u";
+// method  "S2PJ-v";
+method  "S2PJ-alternate";
+// method  "S2PJ-alternateExpl";
 // method  "S3PJ-alternate";
 
 // ************************************************************************* //

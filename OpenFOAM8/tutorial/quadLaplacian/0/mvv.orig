@@ -46,16 +46,16 @@ val 1.0;
             const fvMesh& mesh = refCast<const fvMesh>(d.db());
             scalarField fld
              (
-               0
+               0.0
                +
                Foam::pow
                (
                10,
-               1.0
+               2.0
                *
-               Foam::cos(scalar(2.)*pi*mesh.C().component(0)->primitiveField())
+               Foam::sin(scalar(1.)*(pi*mesh.C().component(0)->primitiveField()-0.5))
                *
-               Foam::cos(scalar(2.)*pi*mesh.C().component(1)->primitiveField())
+               Foam::sin(scalar(2.)*(pi*mesh.C().component(1)->primitiveField()-0.5))
                )
                ///
                //scalar(2)
@@ -73,9 +73,10 @@ boundaryField
 {
     "left|right|top|bottom"
     {
+        type            zeroGradient;
         // type            calculated;
-        type            fixedValue;
-        value           uniform     $val;
+        // type            fixedValue;
+        // value           uniform     $val;
     }
 
     frontAndBack

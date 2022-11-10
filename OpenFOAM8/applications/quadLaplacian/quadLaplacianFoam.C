@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
             {
                 // Au = Bv
                 // Dv = Cu
-                solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv, vOld));
-                solve(-fvm::laplacian(mvv, v) == fvc::laplacian(mvu, uOld));
+                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, vOld));
+                solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, uOld));
                 uOld = u;
                 vOld = v;
                 Info << endl;
@@ -72,23 +72,8 @@ int main(int argc, char *argv[])
         {
             while (pimple.loop())
             {
-                solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv, v));
-                solve(-fvm::laplacian(mvv, v) == fvc::laplacian(mvu, u));
-                Info << endl;
-            }
-        }
-        else if (method == "S3PJ-alternate")
-        {
-            while (pimple.loop())
-            {
-                {
-                    #include "ABCDEqn.H"
-                    solve(Aeqn - fvm::Sp(Beqn.A()*Ceqn.A() / Deqn.A(), u) == Beqn.H() - Beqn.A()*(Deqn.H() + Ceqn.H()) / Deqn.A());
-                }
-                {
-                    #include "ABCDEqn.H"
-                    solve(Deqn - fvm::Sp(Ceqn.A()*Beqn.A() / Aeqn.A(), v) == Ceqn.H() - Ceqn.A()*(Aeqn.H() + Beqn.H()) / Aeqn.A());
-                }
+                solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, u));
+                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, v));
                 Info << endl;
             }
         }
@@ -111,28 +96,55 @@ int main(int argc, char *argv[])
         {
             while (pimple.loop())
             {
-                fvScalarMatrix Aeqn(-fvm::laplacian(muu, u));
-                fvScalarMatrix Ceqn(fvm::laplacian(mvu, u));
-                volScalarField CinvA(Ceqn.A() * (scalar(1.0) / Aeqn.A()));
-                solve(-fvm::laplacian(mvv, v) - CinvA * fvm::laplacian(muv, v) == -Ceqn.H() + CinvA * Aeqn.H());
-                fvScalarMatrix Beqn(fvm::laplacian(muv, v));
-                fvScalarMatrix Deqn(-fvm::laplacian(mvv, v));
-                volScalarField BinvD(Beqn.A() * (scalar(1.0) / Deqn.A()));
-                solve(-fvm::laplacian(muu, u) - BinvD * fvm::laplacian(mvu, u) == -Beqn.H() + BinvD * Deqn.H());
+                fvScalarMatrix Aeqn(fvm::laplacian(-muu, u));
+                fvScalarMatrix Ceqn(fvm::laplacian(-mvu, u));
+                volScalarField CCinvAA(Ceqn.A()/Aeqn.A());
+                solve(fvm::laplacian(-mvv, v) - CCinvAA * fvm::laplacian(-muv, v) == Ceqn.H() - CCinvAA * Aeqn.H());
+                fvScalarMatrix Beqn(fvm::laplacian(-muv, v));
+                fvScalarMatrix Deqn(fvm::laplacian(-mvv, v));
+                volScalarField BBinvDD(Beqn.A()/Deqn.A());
+                solve(fvm::laplacian(-muu, u) - BBinvDD * fvm::laplacian(-mvu, u) == Beqn.H() - BBinvDD * Deqn.H());
                 Info << endl;
             }
         }
-        else if (method == "S2PJ-a")
+        else if (method == "S2PJ-v")
         {
             while (pimple.loop())
             {
                 // Au = Bv -> AAu - AH = Bv -> u = (AH + Bv)/AA
                 // Dv = Cu -> Dv - CAu = -CH -> Dv - (CA/AA)*Bv = -CH + (CA/AA)*AH
-                fvScalarMatrix Aeqn(-fvm::laplacian(muu, u));
-                fvScalarMatrix Ceqn(fvm::laplacian(mvu, u));
-                volScalarField CinvA(Ceqn.A() * (scalar(1.0) / Aeqn.A()));
-                solve(-fvm::laplacian(mvv, v) - CinvA * fvm::laplacian(muv, v) == -Ceqn.H() + CinvA * Aeqn.H());
-                solve(-fvm::laplacian(muu, u) == fvc::laplacian(muv * v));
+                fvScalarMatrix Aeqn(fvm::laplacian(-muu, u));
+                fvScalarMatrix Ceqn(fvm::laplacian(-mvu, u));
+                volScalarField CCinvAA(Ceqn.A()/Aeqn.A());
+                solve(fvm::laplacian(-mvv, v) - CCinvAA*fvm::laplacian(-muv, v) == Ceqn.H() - CCinvAA * Aeqn.H());
+                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, v));
+                Info << endl;
+            }
+        }
+        else if (method == "S2PJ-u")
+        {
+            while (pimple.loop())
+            {
+                fvScalarMatrix Beqn(fvm::laplacian(-muv, v));
+                fvScalarMatrix Deqn(fvm::laplacian(-mvv, v));
+                volScalarField BBinvDD(Beqn.A()/Deqn.A());
+                solve(fvm::laplacian(-muu, u) - BBinvDD*fvm::laplacian(-muv, u) == Beqn.H() - BBinvDD * Deqn.H());
+                solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, u));
+                Info << endl;
+            }
+        }
+        else if (method == "S3PJ-alternate") // CONTROLLARE SE È TUTTO OK
+        {
+            while (pimple.loop())
+            {
+                {
+                    #include "ABCDEqn.H"
+                    solve(Aeqn - fvm::Sp(Beqn.A()*Ceqn.A() / Deqn.A(), u) == Beqn.H() - Beqn.A()*(Deqn.H() + Ceqn.H()) / Deqn.A());
+                }
+                {
+                    #include "ABCDEqn.H"
+                    solve(Deqn - fvm::Sp(Ceqn.A()*Beqn.A() / Aeqn.A(), v) == Ceqn.H() - Ceqn.A()*(Aeqn.H() + Beqn.H()) / Aeqn.A());
+                }
                 Info << endl;
             }
         }

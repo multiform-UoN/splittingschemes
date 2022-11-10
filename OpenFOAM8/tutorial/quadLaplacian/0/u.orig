@@ -20,26 +20,32 @@ internalField   uniform 0;
 
 boundaryField
 {
-    left
-    {
-        type            fixedValue;
-        value           uniform 1;
-    }
-
-    right
-    {
-        type            fixedValue;
-        value           uniform 0;
-    }
-
     top
     {
-         type    zeroGradient;
+        type            fixedValue;
+        value           uniform -1;
+        // type            fixedGradient;
+        // gradient        uniform -5;
     }
 
     bottom
     {
-        type    zeroGradient;
+        type            fixedValue;
+        value           uniform 1;   
+    }
+
+    left
+    {
+        type            zeroGradient;
+        // type            fixedGradient;
+        // gradient        uniform -2;
+    }
+
+    right
+    {
+        type            zeroGradient;
+        // type            fixedGradient;
+        // gradient        uniform -5;
     }
 
     frontAndBack
