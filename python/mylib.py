@@ -191,6 +191,31 @@ def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, toll, type):
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
 
+# def method_PredCorrU(A, B, C, D, f1, f2, nit, toll):
+#     nitfinal = 0
+#     Id    = np.eye(f1.size)
+#     AA    = np.diag(A.diagonal(),0)
+#     invAA = np.diag(1/A.diagonal(),0)
+#     DD    = np.diag(D.diagonal(),0)
+#     invDD = np.diag(1/D.diagonal(),0)
+#     u = np.zeros(A.shape[0])
+#     v = np.zeros(A.shape[0])
+#     res = []
+#     for i in range(nit):
+#         nitfinal += 1
+
+#         u_pred = (2.0*Id-A.toarray())@(f1-B@v)
+#         v = sparse.linalg.spsolve(D, f2 - C@u_pred)
+#         u = sparse.linalg.spsolve(A, f1 - B@v)
+
+#         # v_pred = invDD@(f2-C@u)
+#         # u = sparse.linalg.spsolve(A, f1 - B@v_pred)
+#         # v = sparse.linalg.spsolve(D, f2 - C@u)
+
+#         res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
+#         if res[-1] < toll: break
+#     return u, v, np.array(res), nitfinal
+
 def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll):
     nitfinal = 0
     AA    = np.diag(D.diagonal(),0)
