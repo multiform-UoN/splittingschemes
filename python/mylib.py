@@ -225,138 +225,18 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll):
     for i in range(nit):
         nitfinal += 1
 
-        # # ALTERNATE
-        # u = sparse.linalg.spsolve(
-        #     A - sparse.csc_matrix(np.dot(BB, np.dot(invDD ,C.toarray()))),
-        #     f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v))) + np.dot(B.toarray()-BB,np.dot(invDD,np.dot(C.toarray(),u)))
-        #     )
-        # v = sparse.linalg.spsolve(
-        #     D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
-        #     f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
-        #     )
+        # S2PJ alternate
+        u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@f2 - (B-BB@invDD@D)@v)
+        v = sparse.linalg.spsolve(D - CC@invAA@B, f2 - CC@invAA@f1 - (C-CC@invAA@A)@u)
 
+        # S2PJ ON u
+        # u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@f2 - (B-BB@invDD@D)@v)
+        # v = sparse.linalg.spsolve(D, f2 - C@u)
 
-        # APPROXIMATED SHUR ON u
-        u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - B@invDD@(f2 - (D-DD)@v) + (B-BB)@invDD@C@u)
-        v = sparse.linalg.spsolve(D, f2 - C@u)
-
-
-        # # APPROXIMATED SHUR ON v
-        # v = sparse.linalg.spsolve(
-        #     D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
-        #     f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
-        #     )
-        # u = sparse.linalg.spsolve(A, f1 - np.dot(B.toarray(),v))
+        # S2PJ ON v
+        # v = sparse.linalg.spsolve(D - CC@invAA@B, f2 - CC@invAA@f1 - (C-CC@invAA@A)@u)
+        # u = sparse.linalg.spsolve(A, f1 - B@v)
 
         res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def method_PredCorrU(A, B, C, D, f1, f2, nit, toll):
-#     nitfinal = 0
-#     Id    = np.eye(f1.size)
-#     AA    = np.diag(A.diagonal(),0)
-#     invAA = np.diag(1/A.diagonal(),0)
-#     DD    = np.diag(D.diagonal(),0)
-#     invDD = np.diag(1/D.diagonal(),0)
-#     u = np.zeros(A.shape[0])
-#     v = np.zeros(A.shape[0])
-#     res = []
-#     for i in range(nit):
-#         nitfinal += 1
-
-#         u_pred = (2.0*Id-A.toarray())@(f1-B@v)
-#         v = sparse.linalg.spsolve(D, f2 - C@u_pred)
-#         u = sparse.linalg.spsolve(A, f1 - B@v)
-
-#         # v_pred = invDD@(f2-C@u)
-#         # u = sparse.linalg.spsolve(A, f1 - B@v_pred)
-#         # v = sparse.linalg.spsolve(D, f2 - C@u)
-
-#         res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
-#         if res[-1] < toll: break
-#     return u, v, np.array(res), nitfinal
-
-
-
-
-
-# def method_ShurPrecond(A, B, C, D, f1, f2, nit, L, sol):
-#     #sA = sparse.csc_matrix(D)
-#     #sA_iLU = sparse.linalg.spilu(sA)
-#     #M = sparse.linalg.LinearOperator((A.shape[0],A.shape[0]), sA_iLU.solve)
-#     #invDD = M.toarray()
-#     DD    = np.diag(D.diagonal(),0)
-#     invDD = np.diag(1/D.diagonal(),0)
-#     u = np.zeros(A.shape[0])
-#     v = np.zeros(A.shape[0])
-#     res = []
-#     for i in range(nit):
-#         u = sparse.linalg.spsolve(
-#             A  - np.dot(B, np.dot(invDD ,C)) , 
-#             f1 - np.dot(B, np.dot(invDD, f2 - np.dot(D-DD, v)))
-#         )
-#         v = sparse.linalg.spsolve(D, f2 - np.dot(C,u))
-#         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
-#     return u, v, np.array(res)
-
-
-# def approxInverse(A, n):
-#     Id = np.eye(A.shape[0])
-#     invA = Id
-#     prev = Id-A
-#     for i in range(n):
-#         invA = invA + prev
-#         prev = np.dot(prev, Id-A)
-#     return invA
-
-# def approxInverseEpsilon(A, n, epsilon):
-#     Id = np.eye(A.shape[0])
-#     invA = Id
-#     prev = Id-epsilon*A
-#     for i in range(n):
-#         invA = invA + prev
-#         prev = np.dot(prev, Id-epsilon*A)
-#     return epsilon*invA
-
-# def method_ShurApproxinv(A, B, C, D, f1, f2, nit, sol, N, epsilon):
-#     invA = approxInverseEpsilon(A, N, epsilon)
-#     #invA = 2.0*np.diag(1/A.diagonal(),0) - np.dot(np.diag(1/A.diagonal(),0),np.dot(A,np.diag(1/A.diagonal(),0)))
-#     u = np.zeros(A.shape[0])
-#     v = np.zeros(A.shape[0])
-#     res = []
-#     for i in range(nit):
-#         v = sparse.linalg.spsolve(
-#             A - np.dot(C, np.dot(invA ,D)), 
-#             f2 - np.dot(B, np.dot(C, np.dot(invA, f1)))
-#         )
-#         v = sparse.linalg.spsolve(A, f1 - np.dot(B, v))
-#         res.append(np.linalg.norm(sol - np.concatenate((u,v))))
-#     return u, v, np.array(res)
-
-# def solveApproxInv(A, b, x0, nit, N, epsilon):
-#     x = x0
-#     AA = epsilon*A
-#     operator = np.eye(A.shape[0])
-#     prev = np.eye(A.shape[0])
-#     for i in range(N):
-#         operator = operator + prev*AA
-#         prev = prev*AA
-    
-#     for i in range(nit):
-#         x = np.dot(operator, x - epsilon*b)
-
-#     return x
