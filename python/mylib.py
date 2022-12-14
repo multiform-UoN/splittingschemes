@@ -17,6 +17,8 @@ def format_func(value, tick_number):
     else:
         return r"${0}\pi$".format(N // 2)
 
+##################################################################################################
+
 def fvm_laplacian_1D(nu, leftBC, rightBC, N, L, kwargs):
     dx = np.divide(L, N)
     fBC = np.zeros(N)
@@ -69,6 +71,11 @@ def slope(residual):
     slope, intercept, r_value, p_value, std_err = stats.linregress(x,np.log10(residual))
     return slope
 
+def algebraic_residual(A, B, C, D, u, v, f1, f2):
+    return np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v)))
+
+##################################################################################################
+
 def method_BlockJacobi(A, B, C, D, f1, f2, nit, toll):
     u  = np.zeros(A.shape[0])
     v  = np.zeros(A.shape[0])
@@ -80,7 +87,7 @@ def method_BlockJacobi(A, B, C, D, f1, f2, nit, toll):
         nitfinal += 1
         u = sparse.linalg.spsolve(A, f1 - B@v0)
         v = sparse.linalg.spsolve(D, f2 - C@u0)
-        res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
+        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
         u0 = u
         v0 = v
         if res[-1] < toll: break
@@ -95,7 +102,7 @@ def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, toll):
         nitfinal += 1
         u = sparse.linalg.spsolve(A, f1 - B@v)
         v = sparse.linalg.spsolve(D, f2 - C@u)
-        res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
+        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
 
@@ -111,13 +118,7 @@ def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, toll):
 #         delta_v = sparse.linalg.spsolve(D, f2 - np.dot(C.toarray(), u) - np.dot(D.toarray(), v))
 #         v = v + delta_v
 #         #v = v + alpha*delta_v # this affects the choice of alpha
-#         res.append(
-#             np.sqrt(
-#                 np.square(np.linalg.norm(f1-np.dot(A.toarray(),u)-np.dot(B.toarray(),v)))
-#                 +
-#                 np.square(np.linalg.norm(f2-np.dot(C.toarray(),u)-np.dot(D.toarray(),v)))
-#                 )
-#             )
+#         res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
 #         if res[-1] < toll: break
 #     return u, v, np.array(res), nitfinal
 
@@ -144,16 +145,16 @@ def method_Lscheme(A, B, C, D, f1, f2, nit, toll, type, L):
             v = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+D, f2 - C@u + L*v)
             u = sparse.linalg.spsolve(A, f1 - B@v)
 
-        res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
+        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
 
 def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, toll, type):
     nitfinal = 0
-    AA    = np.diag(A.diagonal(),0)
-    invAA = np.diag(1/A.diagonal(),0)
-    DD    = np.diag(D.diagonal(),0)
-    invDD = np.diag(1/D.diagonal(),0)
+    AA    = sparse.csc_matrix(np.diag(A.diagonal(), 0))
+    invAA = sparse.csc_matrix(np.diag(1/A.diagonal(), 0))
+    DD    = sparse.csc_matrix(np.diag(D.diagonal(), 0))
+    invDD = sparse.csc_matrix(np.diag(1/D.diagonal(), 0))
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     res = []
@@ -162,34 +163,107 @@ def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, toll, type):
 
         # ALTERNATE
         if type=='alternate':
-            u = sparse.linalg.spsolve(
-                A - sparse.csc_matrix(np.dot(B.toarray(), np.dot(invDD ,C.toarray()))),
-                f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v)))
-                )
-            v = sparse.linalg.spsolve(
-                D - sparse.csc_matrix(np.dot(C.toarray(), np.dot(invAA ,C.toarray()))),
-                f2 - np.dot(B.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u)))
-                )
+            u = sparse.linalg.spsolve(A - B@invDD@C, f1 - B@invDD@(f2-(D-DD)@v))
+            v = sparse.linalg.spsolve(D - C@invAA@B, f2 - C@invAA@(f1-(A-AA)@u))
         
         # APPROXIMATED SHUR ON u
         if type=='shur_on_u':
-            u = sparse.linalg.spsolve(
-                A - sparse.csc_matrix(np.dot(B.toarray(), np.dot(invDD ,C.toarray()))),
-                f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v)))
-                )
+            u = sparse.linalg.spsolve(A - B@invDD@C, f1 - B@invDD@(f2-(D-DD)@v))
             v = sparse.linalg.spsolve(D, f2 - C@u)
 
         # APPROXIMATED SHUR ON v
         if type=='shur_on_v':
-            v = sparse.linalg.spsolve(
-                D - sparse.csc_matrix(np.dot(C.toarray(), np.dot(invAA ,C.toarray()))),
-                f2 - np.dot(B.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u)))
-                )
+            v = sparse.linalg.spsolve(D - C@invAA@B, f2 - C@invAA@(f1-(A-AA)@u))
             u = sparse.linalg.spsolve(A, f1 - B@v)
 
-        res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
+        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
         if res[-1] < toll: break
     return u, v, np.array(res), nitfinal
+
+def method_SPJ_stab(A, B, C, D, f1, f2, nit, toll, type):
+    nitfinal = 0
+    AA    = np.diag(A.diagonal(), 0)
+    invAA = np.diag(1/A.diagonal(), 0)
+    DD    = np.diag(D.diagonal(), 0)
+    invDD = np.diag(1/D.diagonal(), 0)
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        nitfinal += 1
+
+        # ALTERNATE
+        if type=='alternate':
+            u = sparse.linalg.spsolve(A - B@invDD@C, f1 - B@v - B@invDD@C@u)
+            v = sparse.linalg.spsolve(D - C@invAA@B, f2 - C@u - C@invAA@B@v)
+        
+        # APPROXIMATED SHUR ON u
+        if type=='shur_on_u':
+            u = sparse.linalg.spsolve(A - B@invDD@C, f1 - B@v - B@invDD@C@u)
+            v = sparse.linalg.spsolve(D, f2 - C@u)
+
+        # APPROXIMATED SHUR ON v
+        if type=='shur_on_v':
+            v = sparse.linalg.spsolve(D - C@invAA@B, f2 - C@u - C@invAA@B@v)
+            u = sparse.linalg.spsolve(A, f1 - B@v)
+
+        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
+
+def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll):
+    nitfinal = 0
+    AA    = sparse.csc_matrix(np.diag(A.diagonal(), 0))
+    invAA = sparse.csc_matrix(np.diag(1/A.diagonal(), 0))
+    BB    = sparse.csc_matrix(np.diag(B.diagonal(), 0))
+    CC    = sparse.csc_matrix(np.diag(C.diagonal(), 0))
+    DD    = sparse.csc_matrix(np.diag(D.diagonal(), 0))
+    invDD = sparse.csc_matrix(np.diag(1/D.diagonal(), 0))
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        nitfinal += 1
+
+        # # ALTERNATE
+        # u = sparse.linalg.spsolve(
+        #     A - sparse.csc_matrix(np.dot(BB, np.dot(invDD ,C.toarray()))),
+        #     f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v))) + np.dot(B.toarray()-BB,np.dot(invDD,np.dot(C.toarray(),u)))
+        #     )
+        # v = sparse.linalg.spsolve(
+        #     D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
+        #     f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
+        #     )
+
+
+        # APPROXIMATED SHUR ON u
+        u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - B@invDD@(f2 - (D-DD)@v) + (B-BB)@invDD@C@u)
+        v = sparse.linalg.spsolve(D, f2 - C@u)
+
+
+        # # APPROXIMATED SHUR ON v
+        # v = sparse.linalg.spsolve(
+        #     D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
+        #     f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
+        #     )
+        # u = sparse.linalg.spsolve(A, f1 - np.dot(B.toarray(),v))
+
+        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # def method_PredCorrU(A, B, C, D, f1, f2, nit, toll):
 #     nitfinal = 0
@@ -215,83 +289,6 @@ def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, toll, type):
 #         res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
 #         if res[-1] < toll: break
 #     return u, v, np.array(res), nitfinal
-
-def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll):
-    nitfinal = 0
-    AA    = np.diag(D.diagonal(),0)
-    invAA = np.diag(1/D.diagonal(),0)
-    BB    = np.diag(B.diagonal(),0)
-    CC    = np.diag(C.diagonal(),0)
-    DD    = np.diag(D.diagonal(),0)
-    invDD = np.diag(1/D.diagonal(),0)
-    u = np.zeros(A.shape[0])
-    v = np.zeros(A.shape[0])
-    res = []
-    for i in range(nit):
-        nitfinal += 1
-
-        # # ALTERNATE
-        # u = sparse.linalg.spsolve(
-        #     A - sparse.csc_matrix(np.dot(BB, np.dot(invDD ,C.toarray()))),
-        #     f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v))) + np.dot(B.toarray()-BB,np.dot(invDD,np.dot(C.toarray(),u)))
-        #     )
-        # v = sparse.linalg.spsolve(
-        #     D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
-        #     f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
-        #     )
-
-
-        # APPROXIMATED SHUR ON u
-        u = sparse.linalg.spsolve(
-            A - sparse.csc_matrix(np.dot(BB, np.dot(invDD ,C.toarray()))),
-            f1 - np.dot(B.toarray(), np.dot(invDD, f2 - np.dot(D.toarray()-DD, v))) + np.dot(B.toarray()-BB,np.dot(invDD,np.dot(C.toarray(),u)))
-            )
-        v = sparse.linalg.spsolve(D, f2 - np.dot(C.toarray(),u))
-
-
-        # # APPROXIMATED SHUR ON v
-        # v = sparse.linalg.spsolve(
-        #     D - sparse.csc_matrix(np.dot(CC, np.dot(invAA ,B.toarray()))),
-        #     f2 - np.dot(C.toarray(), np.dot(invAA, f1 - np.dot(A.toarray()-AA, u))) + np.dot(C.toarray()-CC,np.dot(invAA,np.dot(B.toarray(),v)))
-        #     )
-        # u = sparse.linalg.spsolve(A, f1 - np.dot(B.toarray(),v))
-
-        res.append(np.sqrt(np.square(np.linalg.norm(f1-A@u-B@v)) + np.square(np.linalg.norm(f2-C@u-D@v))))
-        if res[-1] < toll: break
-    return u, v, np.array(res), nitfinal
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
