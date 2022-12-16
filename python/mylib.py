@@ -20,6 +20,7 @@ def format_func(value, tick_number):
 ##################################################################################################
 
 def fvm_laplacian_1D(nu, leftBC, rightBC, N, L, kwargs):
+    """generate the sparse matrix of the second order finite difference scheme"""
     dx = np.divide(L, N)
     fBC = np.zeros(N)
     diag = np.zeros(N)
@@ -132,17 +133,17 @@ def method_Lscheme(A, B, C, D, f1, f2, nit, toll, type, L):
 
         # L on both
         if type=='both':
-            u = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+A, f1 + L*u - B@v)
-            v = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+D, f2 + L*v - C@u)
+            u = sparse.linalg.spsolve((L*sparse.eye(A.shape[0])) + A, f1 + L*u - B@v)
+            v = sparse.linalg.spsolve((L*sparse.eye(A.shape[0])) + D, f2 + L*v - C@u)
         
         # L on u
         if type=='L_on_u':
-            u = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+A, f1 - B@v + L*u)
+            u = sparse.linalg.spsolve((L*sparse.eye(A.shape[0])) + A, f1 - B@v + L*u)
             v = sparse.linalg.spsolve(D, f2 - C@u)
 
         # L on v
         if type=='L_on_v':
-            v = sparse.linalg.spsolve((L*sparse.eye(A.shape[0]))+D, f2 - C@u + L*v)
+            v = sparse.linalg.spsolve((L*sparse.eye(A.shape[0])) + D, f2 - C@u + L*v)
             u = sparse.linalg.spsolve(A, f1 - B@v)
 
         res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
@@ -182,10 +183,10 @@ def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, toll, type):
 
 def method_SPJ_stab(A, B, C, D, f1, f2, nit, toll, type):
     nitfinal = 0
-    AA    = np.diag(A.diagonal(), 0)
-    invAA = np.diag(1/A.diagonal(), 0)
-    DD    = np.diag(D.diagonal(), 0)
-    invDD = np.diag(1/D.diagonal(), 0)
+    AA    = sparse.csc_matrix(np.diag(A.diagonal(), 0))
+    invAA = sparse.csc_matrix(np.diag(1/A.diagonal(), 0))
+    DD    = sparse.csc_matrix(np.diag(D.diagonal(), 0))
+    invDD = sparse.csc_matrix(np.diag(1/D.diagonal(), 0))
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     res = []
@@ -226,8 +227,8 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll):
         nitfinal += 1
 
         # S2PJ alternate
-        u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@f2 - (B-BB@invDD@D)@v)
-        v = sparse.linalg.spsolve(D - CC@invAA@B, f2 - CC@invAA@f1 - (C-CC@invAA@A)@u)
+        u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@f2 - ((B-BB)@invDD@D)@v)
+        v = sparse.linalg.spsolve(D - CC@invAA@B, f2 - CC@invAA@f1 - ((C-CC)@invAA@A)@u)
 
         # S2PJ ON u
         # u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@f2 - (B-BB@invDD@D)@v)
