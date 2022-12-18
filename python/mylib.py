@@ -196,8 +196,8 @@ def method_ShurDualPartialJacobi(A, B, C, D, f1, f2, nit, toll, type='alternate'
     for i in range(nit):
         nitfinal += 1
         if type=='alternate':
-            # u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@f2 - ((B-BB)@invDD@D)@v)  ??????
-            # v = sparse.linalg.spsolve(D - CC@invAA@B, f2 - CC@invAA@f1 - ((C-CC)@invAA@A)@u)  ??????
+            # u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@f2 - ((B-BB)@invDD@D)@v)  ?????? old version
+            # v = sparse.linalg.spsolve(D - CC@invAA@B, f2 - CC@invAA@f1 - ((C-CC)@invAA@A)@u)  ?????? old version
             u = sparse.linalg.spsolve(A - BB@invDD@C, f1 - BB@invDD@(f2 - D@v) - B@v)
             v = sparse.linalg.spsolve(D - CC@invAA@B, f2 - CC@invAA@(f1 - A@u) - C@u)
         if type=='shur_on_u':
