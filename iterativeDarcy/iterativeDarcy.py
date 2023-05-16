@@ -35,26 +35,33 @@ def randtridiagpd(n):
 
 # Parameters
 n = 50
-m = 25
-max_it = 100
+m = 10
+max_it = 20
 tol = 1e-3
-beta = 2  # parameter that controls the coupling
+beta = 10  # parameter that controls the coupling
+log = True
 
 # # Saddle point
-M = randpd(n)
-M = beta * M + randtridiagpd(n)
-Bt = np.random.randn(n, m)
-B = Bt.T
-D = np.zeros((m, m))
-omega = -1e-5
+# M = randpd(n)
+# M = beta * M + randtridiagpd(n)
+# Bt = np.random.randn(n, m)
+# B = Bt.T
+# D = np.zeros((m, m))
+# omega = -1e-5
+
+# if np.linalg.matrix_rank(B)!=m:
+#     print("Warning!! INF-SUP not satisfied!")
+#     print(np.linalg.matrix_rank(B), m)
+#     # exit()
 
 # # Generic coupling
 M = randpd(n)
 M = M + randtridiagpd(n)
-D = randtridiagpd(m)
+D = -np.random.randn(m,m)
+# D = -randtridiagpd(m)/beta
 Bt = beta*np.random.randn(n, m)
 B = beta*np.random.randn(m, n)
-B = -Bt.T
+B = Bt.T
 omega = 0
 
 # linear system
@@ -72,17 +79,99 @@ R = np.block([[np.eye(n), np.dot(np.linalg.inv(M), Bt)], [np.zeros((m, n)), S-D]
 
 ########################
 ########################
+#  Uzawa
+print(" Standard Uzawa with alpha and beta")
+x0 = np.zeros((n + m, 1))
+r = A.dot(x0) - f
+z = np.linalg.solve(Q, r)
+z0 = z.copy()
+for i in range(max_it):
+    alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
+    alpha = min(max(alpha,0.1),1.0)
+    # print('alpha ', alpha)
+    xk = x0 - alpha*z
+    r = A.dot(xk) - f
+    # print(np.linalg.norm(r))
+    if np.linalg.norm(r) < tol:
+        print("Converged in ", i, " iterations")
+        break
+    z0 = z
+    z = np.linalg.solve(Q, r)
+    beta = np.dot(z.flatten(),z0.flatten())/np.dot(z0.flatten(),z0.flatten())
+    # print('beta ', beta)
+    z = z - beta*z0
+    x0 = xk
+if i==max_it-1:
+    print("Not converged")
+
+print("\n")
+
+########################
+########################
+#  Uzawa
+print(" Standard Uzawa ")
+x0 = np.zeros((n + m, 1))
+r = A.dot(x0) - f
+for i in range(max_it):
+    xk = x0 - np.linalg.solve(Q, r)
+    r = A.dot(xk) - f
+    # print(np.linalg.norm(r))
+    if np.linalg.norm(r) < tol:
+        print("Converged in ", i, " iterations")
+        break
+    x0 = xk
+if i==max_it-1:
+    print("Not converged")
+
+print("\n")
+
+########################
+########################
 # Peters iterative scheme
-print("Peters with alpha")
+print("Peters with alpha and beta")
+x0 = np.zeros((n + m, 1))
+r = A.dot(x0) - f
+z = np.linalg.solve(R, np.linalg.solve(Q, r))
+z0 = z.copy()
+for i in range(max_it):
+    alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
+    alpha = min(max(alpha,0.1),1.0)
+    if log:
+        print('alpha ', alpha)
+    xk = x0 - alpha*z
+    r = A.dot(xk) - f
+    if log:
+        print(np.linalg.norm(r))
+    if np.linalg.norm(r) < tol:
+        print("Converged in ", i, " iterations")
+        break
+    z0 = z
+    z = np.linalg.solve(R, np.linalg.solve(Q, r))
+    beta = np.dot(z.flatten(),z0.flatten())/np.dot(z0.flatten(),z0.flatten())
+    # print('beta ', beta)
+    z = z - beta*z0
+    x0 = xk
+if i==max_it-1:
+    print("Not converged")
+
+print("\n")
+
+########################
+########################
+# Peters iterative scheme
+print("Peters with alpha st zk -| rk+1")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
 for i in range(max_it):
     z = np.linalg.solve(R, np.linalg.solve(Q, r))
     alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
-    # print('alpha ', alpha)
-    xk = x0 - min(max(0.5,alpha),1)*z
+    alpha = min(max(alpha,0.1),1.0)
+    if log:
+        print('alpha ', alpha)
+    xk = x0 - alpha*z
     r = A.dot(xk) - f
-    # print(np.linalg.norm(r))
+    if log:
+        print(np.linalg.norm(r))
     if np.linalg.norm(r) < tol:
         print("Converged in ", i, " iterations")
         break
@@ -102,6 +191,8 @@ for i in range(max_it):
     z = np.linalg.solve(R, np.linalg.solve(Q, r))
     xk = x0 - z
     r = A.dot(xk) - f
+    if log:
+        print(np.linalg.norm(r))
     if np.linalg.norm(r) < tol:
         print("Converged in ", i, " iterations")
         break
@@ -113,25 +204,37 @@ print("\n")
 
 ########################
 ########################
-# New idea
+# preconditioner Q for new idea and preconditioned Uzawa
 Q = np.block([[M, np.zeros((n, m))], [B, -S+D]])  # Prec Uzawa
 R = np.block([[np.eye(n), np.dot(np.linalg.inv(M), Bt)], [np.zeros((m, n)), np.eye(m)]])
 H = np.eye(m + n) - R
 Rm1h = H + np.eye(m + n)
 
+########################
+########################
 # New idea iterative scheme
-print("New idea with alpha")
+print("New idea with alpha and beta")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
+z = np.dot(Rm1h,np.linalg.solve(Q, r))
+z0 = z.copy()
 for i in range(max_it):
-    z = np.dot(Rm1h,np.linalg.solve(Q, r))
     alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
-    # print('alpha ', alpha)
-    xk = x0 - min(max(0.5,alpha),1)*z
+    alpha = min(max(alpha,0.1),1.0)
+    if log:
+        print('alpha ', alpha)
+    xk = x0 - alpha*z
     r = A.dot(xk) - f
+    if log:
+        print(np.linalg.norm(r))
     if np.linalg.norm(r) < tol:
         print("Converged in ", i, " iterations")
         break
+    z0 = z
+    z = np.dot(Rm1h,np.linalg.solve(Q, r))
+    beta = np.dot(z.flatten(),z0.flatten())/np.dot(z0.flatten(),z0.flatten())
+    # print('beta ', beta)
+    z = z - beta*z0
     x0 = xk
 if i==max_it-1:
     print("Not converged")
@@ -205,27 +308,32 @@ print("\n")
 ########################
 ########################
 # Preconditioned Uzawa
-print("Preconditioned Uzawa CG beta=1")
+print("Preconditioned Uzawa with alpha and beta")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
-p = np.linalg.solve(Q, r)
+z = np.linalg.solve(Q, r)
+z0 = z.copy()
 for i in range(max_it):
-    z = np.linalg.solve(Q, r)
-    alpha = np.dot(z.flatten(),r.flatten())/np.dot(p.flatten(),A.dot(p).flatten())
-    # print('alpha ', alpha)
-    xk = x0 - min(max(0.5,alpha),1)*p
-    r0 = r.copy()
-    z0 = z.copy()
+    alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
+    alpha = min(max(alpha,0.1),1.0)
+    if log:
+        print('alpha ', alpha)
+    xk = x0 - alpha*z
     r = A.dot(xk) - f
+    if log:
+        print(np.linalg.norm(r))
     if np.linalg.norm(r) < tol:
         print("Converged in ", i, " iterations")
         break
+    z0 = z
     z = np.linalg.solve(Q, r)
-    p = z.copy()
+    beta = np.dot(z.flatten(),z0.flatten())/np.dot(z0.flatten(),z0.flatten())
+    # print('beta ', beta)
+    z = z - beta*z0
     x0 = xk
 if i==max_it-1:
     print("Not converged")
-    
+
 print("\n")    
 
 ########################
@@ -236,64 +344,61 @@ x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
 p = np.linalg.solve(Q, r)
 for i in range(max_it):
-    z = np.linalg.solve(Q, r)
-    xk = x0 - p
-    r0 = r.copy()
-    z0 = z.copy()
+    xk = x0 - np.linalg.solve(Q, r)
     r = A.dot(xk) - f
+    if log:
+        print(np.linalg.norm(r))
     if np.linalg.norm(r) < tol:
         print("Converged in ", i, " iterations")
         break
-    z = np.linalg.solve(Q, r)
-    p = z.copy()
     x0 = xk
 if i==max_it-1:
     print("Not converged")
 
 print("\n")    
 
-########################
-########################
-# Gauss-Seidel
-Q = np.block([[M, np.zeros((n, m))], [B, D+omega*np.eye(m)]])  # standard Gauss Seidel + Uzawa/L-relaxation
+# ########################
+# ########################
+# # Gauss-Seidel
+# Q = np.block([[M, np.zeros((n, m))], [B, D+omega*np.eye(m)]])  # standard Gauss Seidel + Uzawa/L-relaxation
 
-# Iterative scheme comparison
-print("Gauss-Seidel/Uzawa with alpha")
-x0 = np.zeros((n + m, 1))
-r = A.dot(x0) - f
-for i in range(max_it):
-    z = np.linalg.solve(Q, r)
-    alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
-    # print('alpha ', alpha)
-    xk = x0 - min(max(0.5,alpha),1)*z
-    r = A.dot(xk) - f
-    if np.linalg.norm(r) < tol:
-        print("Converged in ", i, " iterations")
-        break
-    x0 = xk
-if i==max_it-1:
-    print("Not converged")
+# # Iterative scheme comparison
+# print("Gauss-Seidel/Uzawa with alpha")
+# x0 = np.zeros((n + m, 1))
+# r = A.dot(x0) - f
+# for i in range(max_it):
+#     z = np.linalg.solve(Q, r)
+#     alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
+#     # print('alpha ', alpha)
+#     xk = x0 - min(max(0.5,alpha),1)*z
+#     r = A.dot(xk) - f
+#     if np.linalg.norm(r) < tol:
+#         print("Converged in ", i, " iterations")
+#         break
+#     x0 = xk
+# if i==max_it-1:
+#     print("Not converged")
 
-print("\n")
+# print("\n")
 
-########################
-########################
-# Gauss-Seidel
-Q = np.block([[M, np.zeros((n, m))], [B, D+omega*np.eye(m)]])  # standard Gauss Seidel + Uzawa/L-relaxation
+# ########################
+# ########################
+# # Gauss-Seidel
+# Q = np.block([[M, np.zeros((n, m))], [B, D+omega*np.eye(m)]])  # standard Gauss Seidel + Uzawa/L-relaxation
 
-# Iterative scheme comparison
-print("Gauss-Seidel/Uzawa")
-x0 = np.zeros((n + m, 1))
-r = A.dot(x0) - f
-for i in range(max_it):
-    z = np.linalg.solve(Q, r)
-    xk = x0 - z
-    r = A.dot(xk) - f
-    if np.linalg.norm(r) < tol:
-        print("Converged in ", i, " iterations")
-        break
-    x0 = xk
-if i==max_it-1:
-    print("Not converged")
+# # Iterative scheme comparison
+# print("Gauss-Seidel/Uzawa")
+# x0 = np.zeros((n + m, 1))
+# r = A.dot(x0) - f
+# for i in range(max_it):
+#     z = np.linalg.solve(Q, r)
+#     xk = x0 - z
+#     r = A.dot(xk) - f
+#     if np.linalg.norm(r) < tol:
+#         print("Converged in ", i, " iterations")
+#         break
+#     x0 = xk
+# if i==max_it-1:
+#     print("Not converged")
 
-print("\n")
+# print("\n")
