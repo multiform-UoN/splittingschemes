@@ -38,31 +38,31 @@ n = 50
 m = 10
 max_it = 20
 tol = 1e-3
-beta = 10  # parameter that controls the coupling
+beta = 0.1  # parameter that controls the coupling
 log = True
 
-# # Saddle point
-# M = randpd(n)
-# M = beta * M + randtridiagpd(n)
-# Bt = np.random.randn(n, m)
-# B = Bt.T
-# D = np.zeros((m, m))
-# omega = -1e-5
-
-# if np.linalg.matrix_rank(B)!=m:
-#     print("Warning!! INF-SUP not satisfied!")
-#     print(np.linalg.matrix_rank(B), m)
-#     # exit()
-
-# # Generic coupling
+# Saddle point
 M = randpd(n)
-M = M + randtridiagpd(n)
-D = -np.random.randn(m,m)
-# D = -randtridiagpd(m)/beta
-Bt = beta*np.random.randn(n, m)
-B = beta*np.random.randn(m, n)
+M = beta * M + randtridiagpd(n)
+Bt = np.random.randn(n, m)
 B = Bt.T
-omega = 0
+D = np.zeros((m, m))
+omega = -1e-5
+
+if np.linalg.matrix_rank(B)!=m:
+    print("Warning!! INF-SUP not satisfied!")
+    print(np.linalg.matrix_rank(B), m)
+    # exit()
+
+# # # Generic coupling
+# M = randpd(n)
+# M = M + randtridiagpd(n)
+# D = -np.random.randn(m,m)
+# D = -randtridiagpd(m)/beta
+# Bt = beta*np.random.randn(n, m)
+# B = beta*np.random.randn(m, n)
+# B = Bt.T
+# omega = 0
 
 # linear system
 A = np.block([[M, Bt], [B, D]])
@@ -190,7 +190,7 @@ r = A.dot(x0) - f
 z = np.linalg.solve(R, np.linalg.solve(Q, r))
 z0 = z.copy()
 for i in range(max_it):
-    alpha = np.dot(z.flatten(),A.dot(r).flatten())/np.dot(A.T.dot(z).flatten(),A.dot(z).flatten())
+    alpha = np.dot(z.flatten(),A.dot(r).flatten())/np.dot(A.dot(z).flatten(),A.dot(z).flatten())
     alpha = min(max(alpha,0.1),1.0)
     if log:
         print('alpha ', alpha)
@@ -203,7 +203,7 @@ for i in range(max_it):
         break
     z0 = z
     z = np.linalg.solve(R, np.linalg.solve(Q, r))
-    beta = np.dot(z.flatten(),z0.flatten())/np.dot(z0.flatten(),z0.flatten())
+    beta = np.dot(z.flatten(),A.dot(z0).flatten())/np.dot(A.dot(z0).flatten(),A.dot(z0).flatten())
     # print('beta ', beta)
     z = z - beta*z0
     x0 = xk
@@ -220,7 +220,7 @@ x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
 for i in range(max_it):
     z = np.linalg.solve(R, np.linalg.solve(Q, r))
-    alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
+    alpha = np.dot(z.flatten(),A.dot(r).flatten())/np.dot(A.dot(z).flatten(),A.dot(z).flatten())
     alpha = min(max(alpha,0.1),1.0)
     if log:
         print('alpha ', alpha)
@@ -240,7 +240,7 @@ print("\n")
 ########################
 ########################
 # Peters iterative scheme alpha=1
-print("Peters original no alpha")
+print("Peters original")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
 for i in range(max_it):
