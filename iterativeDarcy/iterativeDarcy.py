@@ -159,7 +159,63 @@ print("\n")
 ########################
 ########################
 # Peters iterative scheme
-print("Peters with alpha st zk -| rk+1")
+print("Peters with alpha")
+x0 = np.zeros((n + m, 1))
+r = A.dot(x0) - f
+for i in range(max_it):
+    z = np.linalg.solve(R, np.linalg.solve(Q, r))
+    alpha = np.dot(z.flatten(),r.flatten())/np.dot(z.flatten(),A.dot(z).flatten())
+    alpha = min(max(alpha,0.1),1.0)
+    if log:
+        print('alpha ', alpha)
+    xk = x0 - alpha*z
+    r = A.dot(xk) - f
+    if log:
+        print(np.linalg.norm(r))
+    if np.linalg.norm(r) < tol:
+        print("Converged in ", i, " iterations")
+        break
+    x0 = xk
+if i==max_it-1:
+    print("Not converged")
+
+print("\n")
+
+########################
+########################
+# Peters iterative scheme
+print("Peters with alpha and beta in A norm")
+x0 = np.zeros((n + m, 1))
+r = A.dot(x0) - f
+z = np.linalg.solve(R, np.linalg.solve(Q, r))
+z0 = z.copy()
+for i in range(max_it):
+    alpha = np.dot(z.flatten(),A.dot(r).flatten())/np.dot(A.T.dot(z).flatten(),A.dot(z).flatten())
+    alpha = min(max(alpha,0.1),1.0)
+    if log:
+        print('alpha ', alpha)
+    xk = x0 - alpha*z
+    r = A.dot(xk) - f
+    if log:
+        print(np.linalg.norm(r))
+    if np.linalg.norm(r) < tol:
+        print("Converged in ", i, " iterations")
+        break
+    z0 = z
+    z = np.linalg.solve(R, np.linalg.solve(Q, r))
+    beta = np.dot(z.flatten(),z0.flatten())/np.dot(z0.flatten(),z0.flatten())
+    # print('beta ', beta)
+    z = z - beta*z0
+    x0 = xk
+if i==max_it-1:
+    print("Not converged")
+
+print("\n")
+
+########################
+########################
+# Peters iterative scheme
+print("Peters with alpha in A norm")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
 for i in range(max_it):
