@@ -34,35 +34,35 @@ def randtridiagpd(n):
     return A
 
 # Parameters
-n = 50
-m = 10
-max_it = 20
+n = 80
+m = 30
+max_it = 200
 tol = 1e-3
-beta = 0.1  # parameter that controls the coupling
-log = True
+beta = 1  # parameter that controls the coupling
+log = False
 
 # Saddle point
-M = randpd(n)
-M = beta * M + randtridiagpd(n)
-Bt = np.random.randn(n, m)
-B = Bt.T
-D = np.zeros((m, m))
-omega = -1e-5
+# M = randpd(n)
+# M = beta * M + randtridiagpd(n)
+# Bt = np.random.randn(n, m)
+# B = Bt.T
+# D = np.zeros((m, m))
+# omega = -1e-5
 
-if np.linalg.matrix_rank(B)!=m:
-    print("Warning!! INF-SUP not satisfied!")
-    print(np.linalg.matrix_rank(B), m)
-    # exit()
+# if np.linalg.matrix_rank(B)!=m:  ## double check!
+#     print("Warning!! INF-SUP not satisfied!")
+#     print(np.linalg.matrix_rank(B), m)
+#     # exit()
 
 # # # Generic coupling
-# M = randpd(n)
-# M = M + randtridiagpd(n)
-# D = -np.random.randn(m,m)
-# D = -randtridiagpd(m)/beta
-# Bt = beta*np.random.randn(n, m)
-# B = beta*np.random.randn(m, n)
-# B = Bt.T
-# omega = 0
+M = randpd(n)
+M = M + randtridiagpd(n)
+D = -np.random.randn(m,m)
+D = randtridiagpd(m)/beta
+Bt = beta*np.random.randn(n, m)
+B = beta*np.random.randn(m, n)
+B = -Bt.T
+omega = 0
 
 # linear system
 A = np.block([[M, Bt], [B, D]])
@@ -73,7 +73,7 @@ print("Condition number:", np.linalg.cond(A))
 
 # Iterative method
 Mhm1 = np.linalg.inv(np.diag(np.diag(M)))
-S = np.dot(B, np.dot(Mhm1, Bt))
+S = np.dot(B, np.dot(Mhm1, Bt))    # approximate Schur
 Q = np.block([[M, np.zeros((n, m))], [B, -np.eye(m)]])  # Uzawa
 R = np.block([[np.eye(n), np.dot(np.linalg.inv(M), Bt)], [np.zeros((m, n)), S-D]])  # Peters paper
 
@@ -268,7 +268,7 @@ Rm1h = H + np.eye(m + n)
 
 ########################
 ########################
-# New idea iterative scheme
+# New idea iterative scheme (seems totally equivalent to Peters)
 print("New idea with alpha and beta")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
@@ -363,7 +363,7 @@ print("\n")
 
 ########################
 ########################
-# Preconditioned Uzawa
+# Preconditioned Uzawa (this is equivalent to our paper with Florin Schur-based partial jacobi)
 print("Preconditioned Uzawa with alpha and beta")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
@@ -398,7 +398,6 @@ print("\n")
 print("Preconditioned Uzawa")
 x0 = np.zeros((n + m, 1))
 r = A.dot(x0) - f
-p = np.linalg.solve(Q, r)
 for i in range(max_it):
     xk = x0 - np.linalg.solve(Q, r)
     r = A.dot(xk) - f
