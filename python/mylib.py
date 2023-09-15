@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.sparse as sparse
-import scipy.linalg as linalg
+# import scipy.linalg as linalg
 from scipy import stats
 
 
