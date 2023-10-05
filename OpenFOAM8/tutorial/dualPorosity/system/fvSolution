@@ -37,15 +37,14 @@ PIMPLE
     nNonOrthogonalCorrectors 0;
     nOuterCorrectors 10000;
 
-    outerCorrectorResidualControl
-    {
-       ".*" 
-        {
-            tolerance $conv;
-            relTol    0;
-        }
-
-    }
+    // outerCorrectorResidualControl
+    // {
+    //    ".*" 
+    //     {
+    //         tolerance $conv;
+    //         relTol    0;
+    //     }
+    // }
 
     residualControl
     {
