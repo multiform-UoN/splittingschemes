@@ -1,7 +1,5 @@
-jupyter
-scipy
 numpy
+scipy
 matplotlib
-pandas
-sympy
-nose
+findiff
+jupyterlab

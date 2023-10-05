@@ -1,5 +1,5 @@
-envname="venv_splitting"
-python="python3"
+envname="venv"
+python="python3.11"
 
 rm -rf $envname
 
@@ -7,10 +7,13 @@ $python -m venv $envname
 
 source $envname/bin/activate
 
-$python -m pip install -r requirements.txt
+pip install --upgrade pip
+
+python -m pip install --no-cache -r requirements.txt
 
 deactivate
 
+clear
 echo ""
-echo "use the command 'source $envname/bin/activate' in this directory to source the virtual environment!!!"
+echo ">>> Use the command 'source $envname/bin/activate' in this directory to source the virtual environment!!!"
 echo ""
