@@ -21,7 +21,7 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Application: chFoam
+Application: quadLaplacian
 
 Description: Cahn-Hilliard solver
 
@@ -37,17 +37,14 @@ Authors: Roberto Nuca, Nottingham (2021)
 int main(int argc, char *argv[])
 {
 #include "setRootCaseLists.H"
-
 #include "createTime.H"
-
 #include "createMesh.H"
 
-    pimpleControl pimple(mesh);
+pimpleControl pimple(mesh);
 
 #include "createFields.H"
 
-    Info << "\nStarting time loop\n"
-         << endl;
+    Info << "\nStarting time loop\n" << endl;
 
     while (runTime.loop())
     {
@@ -59,10 +56,8 @@ int main(int argc, char *argv[])
             volScalarField vOld(v);
             while (pimple.loop())
             {
-                // Au = Bv
-                // Dv = Cu
-                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, vOld));
-                solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, uOld));
+                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, vOld)); // Au = Bv
+                solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, uOld)); // Dv = Cu
                 uOld = u;
                 vOld = v;
                 Info << endl;
@@ -155,8 +150,7 @@ int main(int argc, char *argv[])
              << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;
     }
 
-    Info << "End\n"
-         << endl;
+    Info << "End\n" << endl;
     return 0;
 }
 
