@@ -15,12 +15,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-beta    beta    [0 0 0 0 0 0 0]    1e2;
+beta    beta    [0 0 0 0 0 0 0]    1e5;
 
 // method  "Block-Jacobi";
-// method  "Block-Gauss-Seidel";
+ method  "Block-Gauss-Seidel";
 // method  "S3PJ-alternate";
-method  "S2PJ-alternate";
+// method  "S2PJ-alternate";
 // method  "S2PJ-v";
 // method  "S2PJ-u";
 
