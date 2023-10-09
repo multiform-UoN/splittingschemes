@@ -25,8 +25,8 @@ solvers
         solver              GAMG;//PCG;
         preconditioner      DIC; //DILU;
         smoother            DIC;
-        tolerance           1e-12;
-        relTol              1e-1;
+        tolerance           $tol;
+        relTol              1e-3;
     }
 }
 
