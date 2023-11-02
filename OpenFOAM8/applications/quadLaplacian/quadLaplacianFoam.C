@@ -92,26 +92,26 @@ pimpleControl pimple(mesh);
                 {
                     #include "ABCDEqn.H"
                     // solve(Aeqn + Beqn.A()*v - Beqn.H());
-                    // solve(Aeqn - (Beqn.A() / Deqn.A()) * Ceqn == Beqn.H() - Beqn.A() * Deqn.H() / Deqn.A());
-                    fvScalarMatrix Leqn
-                    (
-                        -(Beqn.A() / Deqn.A()) * Ceqn
-                    );
-                    Info << fvc::domainIntegrate(Foam::magSqr(Aeqn.A()*u-Aeqn.H())) << endl;
-                    Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*u-Leqn.H())) << endl;
-                    solve(Aeqn + Beqn.A()*(v) - Beqn.H() + Leqn == Leqn.A()*u - Leqn.H()); // u equation
+                    solve(Aeqn - (Beqn.A() / Deqn.A()) * Ceqn == Beqn.H() - Beqn.A() * Deqn.H() / Deqn.A());
+                    // fvScalarMatrix Leqn
+                    // (
+                    //     -(Beqn.A() / Deqn.A()) * Ceqn
+                    // );
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Aeqn.A()*u-Aeqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*u-Leqn.H())) << endl;
+                    // solve(Aeqn + Beqn.A()*(v) - Beqn.H() + Leqn == Leqn.A()*u - Leqn.H()); // u equation
                 }
                 {
                     #include "ABCDEqn.H"
                     // solve(Deqn + Ceqn.A()*u - Ceqn.H());
-                    // solve(Deqn - (Ceqn.A() / Aeqn.A()) * Beqn == Ceqn.H() - Ceqn.A() * Aeqn.H() / Aeqn.A());
-                    fvScalarMatrix Leqn
-                    (
-                        -(Ceqn.A() / Aeqn.A()) * Beqn
-                    );
-                    Info << fvc::domainIntegrate(Foam::magSqr(Deqn.A()*v-Deqn.H())) << endl;
-                    Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*v-Leqn.H())) << endl;
-                    solve(Deqn + Ceqn.A()*(u) - Ceqn.H() + Leqn == Leqn.A()*v - Leqn.H()); // v equation
+                    solve(Deqn - (Ceqn.A() / Aeqn.A()) * Beqn == Ceqn.H() - Ceqn.A() * Aeqn.H() / Aeqn.A());
+                    // fvScalarMatrix Leqn
+                    // (
+                    //     -(Ceqn.A() / Aeqn.A()) * Beqn
+                    // );
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Deqn.A()*v-Deqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*v-Leqn.H())) << endl;
+                    // solve(Deqn + Ceqn.A()*(u) - Ceqn.H() + Leqn == Leqn.A()*v - Leqn.H()); // v equation
                 }
                 Info << endl;
             }
