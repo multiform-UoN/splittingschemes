@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.sparse as sparse
-# import scipy.linalg as linalg
 from scipy import stats
 
 
@@ -20,10 +19,11 @@ def format_func(value, tick_number):
 
 
 ##################################################################################################
-
+##################################################################################################
+############################### 1D fvm discretization ############################################
 
 def fvm_laplacian_1D(nu, leftBC, rightBC, N, L, kwargs):
-    """generate the sparse matrix of the second order finite difference scheme"""
+    """generate the sparse matrix of the second order finite volumes scheme over a uniform grid"""
     dx = np.divide(L, N)
     fBC = np.zeros(N)
     diag = np.zeros(N)
@@ -69,6 +69,10 @@ def fvm_reconstruct_1D(sol):
     return rec
 
 
+##################################################################################################
+##################################################################################################
+######################################### utilities ##############################################
+
 def slope(residual):
     """compute the slope of the error function in log scale"""
     x = np.arange(len(residual))
@@ -81,6 +85,8 @@ def algebraic_residual(A, B, C, D, u, v, f1, f2):
 
 
 ##################################################################################################
+##################################################################################################
+############################## iterative algorithms ##############################################
 
 
 def method_BlockJacobi(A, B, C, D, f1, f2, nit, toll):
@@ -115,21 +121,21 @@ def method_BlockGaussSeidel(A, B, C, D, f1, f2, nit, toll):
     return u, v, np.array(res), nitfinal
 
 
-# def method_BlockSOR(A, B, C, D, f1, f2, nit, alpha, toll):
-#     nitfinal = 0
-#     u = np.zeros(A.shape[0])
-#     v = np.zeros(A.shape[0])
-#     res = []
-#     for i in range(nit):
-#         nitfinal += 1
-#         delta_u = sparse.linalg.spsolve(A, f1 - np.dot(A.toarray(), u) - np.dot(B.toarray(), v))
-#         u = u + alpha*delta_u
-#         delta_v = sparse.linalg.spsolve(D, f2 - np.dot(C.toarray(), u) - np.dot(D.toarray(), v))
-#         v = v + delta_v
-#         #v = v + alpha*delta_v # this affects the choice of alpha
-#         res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
-#         if res[-1] < toll: break
-#     return u, v, np.array(res), nitfinal
+def method_BlockSOR(A, B, C, D, f1, f2, nit, alpha, toll): #TO CHECK IF IT IS CORRECT
+    nitfinal = 0
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    for i in range(nit):
+        nitfinal += 1
+        delta_u = sparse.linalg.spsolve(A, f1 - np.dot(A.toarray(), u) - np.dot(B.toarray(), v))
+        u = u + alpha*delta_u
+        delta_v = sparse.linalg.spsolve(D, f2 - np.dot(C.toarray(), u) - np.dot(D.toarray(), v))
+        v = v + delta_v
+        #v = v + alpha*delta_v # this affects the choice of alpha
+        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+        if res[-1] < toll: break
+    return u, v, np.array(res), nitfinal
 
 
 def method_ShurPartialJacobi(A, B, C, D, f1, f2, nit, toll, type):
@@ -216,17 +222,65 @@ def method_Lscheme(A, B, C, D, f1, f2, nit, toll, type, Lu, Lv):
     u = np.zeros(A.shape[0])
     v = np.zeros(A.shape[0])
     res = []
-    for i in range(nit):
-        nitfinal += 1        
-        if type=='both':
+    
+    if type=='both':
+        for i in range(nit):
+            nitfinal += 1
             u = sparse.linalg.spsolve((Lu*sparse.eye(A.shape[0])) + A, f1 + Lu*u - B@v)
             v = sparse.linalg.spsolve((Lv*sparse.eye(A.shape[0])) + D, f2 + Lv*v - C@u)
-        if type=='L_on_u':
+            res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+            if res[-1] < toll: break
+
+    if type=='L_on_u':
+        for i in range(nit):
+            nitfinal += 1
             u = sparse.linalg.spsolve((Lu*sparse.eye(A.shape[0])) + A, f1 - B@v + Lu*u)
             v = sparse.linalg.spsolve(D, f2 - C@u)
-        if type=='L_on_v':
+            res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+            if res[-1] < toll: break
+
+    if type=='L_on_v':
+        for i in range(nit):
+            nitfinal += 1
             v = sparse.linalg.spsolve((Lv*sparse.eye(A.shape[0])) + D, f2 - C@u + Lv*v)
             u = sparse.linalg.spsolve(A, f1 - B@v)
-        res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
-        if res[-1] < toll: break
+            res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+            if res[-1] < toll: break
+
     return u, v, np.array(res), nitfinal
+
+def method_Loperators(A, B, C, D, f1, f2, nit, toll, type, L):
+    nitfinal = 0
+    u = np.zeros(A.shape[0])
+    v = np.zeros(A.shape[0])
+    res = []
+    
+    if type=='both': #in this case L is a pair containing Lu=L[0] and Lv=L[1]
+        for i in range(nit):
+            nitfinal += 1
+            u = sparse.linalg.spsolve(L[0] + A, f1 - B@v + L[0]@u)
+            v = sparse.linalg.spsolve(L[1] + D, f2 - C@u + L[1]@v)
+            # order switched
+            # v = sparse.linalg.spsolve(L[1] + D, f2 - C@u + L[1]@v)
+            # u = sparse.linalg.spsolve(L[0] + A, f1 - B@v + L[0]@u)
+            res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+            if res[-1] < toll: break
+    
+    if type=='L_on_u':
+        for i in range(nit):
+            nitfinal += 1
+            u = sparse.linalg.spsolve(L + A, f1 - B@v + L@u)
+            v = sparse.linalg.spsolve(D, f2 - C@u)
+            res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+            if res[-1] < toll: break
+            
+    if type=='L_on_v':
+        for i in range(nit):
+            nitfinal += 1
+            v = sparse.linalg.spsolve(L + D, f2 - C@u + L@v)
+            u = sparse.linalg.spsolve(A, f1 - B@v)
+            res.append(algebraic_residual(A, B, C, D, u, v, f1, f2))
+            if res[-1] < toll: break
+
+    return u, v, np.array(res), nitfinal
+
