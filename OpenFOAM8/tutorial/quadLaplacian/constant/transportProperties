@@ -11,12 +11,12 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      electrokineticProperties;
+    object      transportProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// method  "Block-Jacobi";
-// method  "Block-Gauss-Seidel";
+method  "Block-Jacobi";
+method  "Block-Gauss-Seidel";
 // method  "S2PJ-u";
 // method  "S2PJ-v";
 method  "S2PJ-alternate";

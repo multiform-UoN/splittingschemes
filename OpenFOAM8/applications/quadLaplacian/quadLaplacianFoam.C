@@ -56,8 +56,13 @@ pimpleControl pimple(mesh);
             volScalarField vOld(v);
             while (pimple.loop())
             {
-                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, vOld)); // Au = Bv
-                solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, uOld)); // Dv = Cu
+                // solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, vOld)); // Au = Bv
+                // solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, uOld)); // Dv = Cu
+                {
+                    #include "ABCDEqn.H"
+                    solve(Deqn + Ceqn.A()*(uOld) - Ceqn.H());
+                    solve(Aeqn + Beqn.A()*(vOld) - Beqn.H());
+                }
                 uOld = u;
                 vOld = v;
                 Info << endl;
@@ -67,8 +72,16 @@ pimpleControl pimple(mesh);
         {
             while (pimple.loop())
             {
-                solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, u));
-                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, v));
+                // solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, u));
+                // solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, v));
+                {
+                    #include "ABCDEqn.H"
+                    solve(Deqn + Ceqn.A()*(u) - Ceqn.H());
+                }
+                {
+                    #include "ABCDEqn.H"
+                    solve(Aeqn + Beqn.A()*(v) - Beqn.H());
+                }
                 Info << endl;
             }
         }
@@ -78,11 +91,27 @@ pimpleControl pimple(mesh);
             {
                 {
                     #include "ABCDEqn.H"
-                    solve(Deqn - (Ceqn.A() / Aeqn.A()) * Beqn == Ceqn.H() - Ceqn.A() * Aeqn.H() / Aeqn.A());
+                    // solve(Aeqn + Beqn.A()*v - Beqn.H());
+                    solve(Aeqn - (Beqn.A() / Deqn.A()) * Ceqn == Beqn.H() - Beqn.A() * Deqn.H() / Deqn.A());
+                    // fvScalarMatrix Leqn
+                    // (
+                    //     -(Beqn.A() / Deqn.A()) * Ceqn
+                    // );
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Aeqn.A()*u-Aeqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*u-Leqn.H())) << endl;
+                    // solve(Aeqn + Beqn.A()*(v) - Beqn.H() + Leqn == Leqn.A()*u - Leqn.H()); // u equation
                 }
                 {
                     #include "ABCDEqn.H"
-                    solve(Aeqn - (Beqn.A() / Deqn.A()) * Ceqn == Beqn.H() - Beqn.A() * Deqn.H() / Deqn.A());
+                    // solve(Deqn + Ceqn.A()*u - Ceqn.H());
+                    solve(Deqn - (Ceqn.A() / Aeqn.A()) * Beqn == Ceqn.H() - Ceqn.A() * Aeqn.H() / Aeqn.A());
+                    // fvScalarMatrix Leqn
+                    // (
+                    //     -(Ceqn.A() / Aeqn.A()) * Beqn
+                    // );
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Deqn.A()*v-Deqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*v-Leqn.H())) << endl;
+                    // solve(Deqn + Ceqn.A()*(u) - Ceqn.H() + Leqn == Leqn.A()*v - Leqn.H()); // v equation
                 }
                 Info << endl;
             }
@@ -108,11 +137,11 @@ pimpleControl pimple(mesh);
             {
                 // Au = Bv -> AAu - AH = Bv -> u = (AH + Bv)/AA
                 // Dv = Cu -> Dv - CAu = -CH -> Dv - (CA/AA)*Bv = -CH + (CA/AA)*AH
+                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, v));
                 fvScalarMatrix Aeqn(fvm::laplacian(-muu, u));
                 fvScalarMatrix Ceqn(fvm::laplacian(-mvu, u));
                 volScalarField CCinvAA(Ceqn.A()/Aeqn.A());
                 solve(fvm::laplacian(-mvv, v) - CCinvAA*fvm::laplacian(-muv, v) == Ceqn.H() - CCinvAA * Aeqn.H());
-                solve(fvm::laplacian(-muu, u) == fvc::laplacian(muv, v));
                 Info << endl;
             }
         }
@@ -120,11 +149,11 @@ pimpleControl pimple(mesh);
         {
             while (pimple.loop())
             {
-                fvScalarMatrix Beqn(fvm::laplacian(-muv, v));
-                fvScalarMatrix Deqn(fvm::laplacian(-mvv, v));
-                volScalarField BBinvDD(Beqn.A()/Deqn.A());
-                solve(fvm::laplacian(-muu, u) - BBinvDD*fvm::laplacian(-muv, u) == Beqn.H() - BBinvDD * Deqn.H());
                 solve(fvm::laplacian(-mvv, v) == fvc::laplacian(mvu, u));
+                fvScalarMatrix Deqn(fvm::laplacian(-mvv, v));
+                fvScalarMatrix Beqn(fvm::laplacian(-muv, v));
+                volScalarField BBinvDD(Beqn.A()/Deqn.A());
+                solve(fvm::laplacian(-muu, u) - BBinvDD*fvm::laplacian(-mvu, u) == Beqn.H() - BBinvDD * Deqn.H());
                 Info << endl;
             }
         }
@@ -145,6 +174,9 @@ pimpleControl pimple(mesh);
         }
 
         runTime.write();
+
+        Info << fvc::domainIntegrate(Foam::magSqr(u)) << endl;
+        Info << fvc::domainIntegrate(Foam::magSqr(v)) << endl;
 
         Info << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
              << "  ClockTime = " << runTime.elapsedClockTime() << " s" << nl << endl;

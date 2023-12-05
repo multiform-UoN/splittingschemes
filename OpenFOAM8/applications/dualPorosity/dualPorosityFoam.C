@@ -57,10 +57,15 @@ int main(int argc, char *argv[])
             volScalarField vOld(v);
             while (pimple.loop())
             {
+                // solve(fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta * vOld);
+                // solve(fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta * uOld);
+                {
+                    #include "ABCDEqn.H"
+                    solve(Deqn + Ceqn.A()*(uOld) - Ceqn.H());
+                    solve(Aeqn + Beqn.A()*(vOld) - Beqn.H());
+                }
                 uOld = u;
                 vOld = v;
-                solve(fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta * vOld);
-                solve(fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta * uOld);
                 Info << endl;
             }
         }
@@ -68,10 +73,18 @@ int main(int argc, char *argv[])
         {
             while (pimple.loop())
             {
-                // Au = beta*v --> Au = beta*(-Cu/D.A + D.H/D.A) =
-                solve(fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta * v); // pEqn == tau*p_fr
-                // Dv = -Cu  --> D.Av - D.H = -Cu -->  v = -Cu/D.A + D.H/D.A
-                solve(fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta * u); // p_frEqn == tau*p
+                // // Au = beta*v --> Au = beta*(-Cu/D.A + D.H/D.A) =
+                // solve(fvm::Sp(beta, u) - fvm::laplacian(mu, u) == beta * v); // pEqn == tau*p_fr
+                // // Dv = -Cu  --> D.Av - D.H = -Cu -->  v = -Cu/D.A + D.H/D.A
+                // solve(fvm::Sp(beta, v) - fvm::laplacian(mv, v) == beta * u); // p_frEqn == tau*p
+                {
+                    #include "ABCDEqn.H"
+                    solve(Aeqn + Beqn.A()*(v) - Beqn.H());
+                }
+                {
+                    #include "ABCDEqn.H"
+                    solve(Deqn + Ceqn.A()*(u) - Ceqn.H());
+                }
                 Info << endl;
             }
         }
@@ -97,11 +110,27 @@ int main(int argc, char *argv[])
                 {
                     #include "ABCDEqn.H"
                     solve(Aeqn - (Beqn.A() / Deqn.A()) * Ceqn == Beqn.H() - Beqn.A() * Deqn.H() / Deqn.A()); // u equation
+                    // fvScalarMatrix Leqn
+                    // (
+                    //     -(Beqn.A() / Deqn.A()) * Ceqn
+                    // );
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Aeqn.A()*u-Aeqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*u-Leqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(beta*v)) << endl;
+                    // solve(Aeqn + Beqn.A()*(v) - Beqn.H() + Leqn == Leqn.A()*u - Leqn.H()); // u equation
                 }
                 {
                     #include "ABCDEqn.H"
                     solve(Deqn - (Ceqn.A() / Aeqn.A()) * Beqn == Ceqn.H() - Ceqn.A() * Aeqn.H() / Aeqn.A()); // v equation
-                }
+                    // fvScalarMatrix Leqn
+                    // (
+                    //     -(Ceqn.A() / Aeqn.A()) * Beqn
+                    // );
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Deqn.A()*v-Deqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(Leqn.A()*v-Leqn.H())) << endl;
+                    // Info << fvc::domainIntegrate(Foam::magSqr(beta*u)) << endl;
+                    // solve(Deqn + Ceqn.A()*(u) - Ceqn.H() + Leqn == Leqn.A()*v - Leqn.H()); // v equation
+                    }
                 Info << endl;
             }
         }
@@ -137,6 +166,9 @@ int main(int argc, char *argv[])
                 solve(fvm::Sp( beta, u) - fvm::laplacian(mu, u) - BBinvDD*fvm::Sp(-beta, u) == Beqn.H() - BBinvDD*Deqn.H());  // compute u
                 solve(fvm::Sp( beta, v) - fvm::laplacian(mv, v) == beta*u); // compute v
                 Info << endl;
+                Info << fvc::domainIntegrate(Foam::magSqr(beta*u - fvc::laplacian(mu, u))) << endl;
+                Info << fvc::domainIntegrate(Foam::magSqr(BBinvDD*beta*u)) << endl;
+                Info << fvc::domainIntegrate(Foam::magSqr(beta*v)) << endl;
             }
         }
 

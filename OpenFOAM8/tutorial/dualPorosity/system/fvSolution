@@ -16,17 +16,17 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 tol 1e-16;
-conv 1e-8;
+conv 1e-6;
 
 solvers
 {
     ".*"
     {
-        solver              PCG;
+        solver              GAMG;//PCG;
         preconditioner      DIC; //DILU;
-        smoother            DIC;
-        tolerance           1e-12;
-        relTol              0;
+        smoother            FDIC;
+        tolerance           $tol;
+        relTol              1e-1;
     }
 }
 
@@ -37,14 +37,14 @@ PIMPLE
     nNonOrthogonalCorrectors 0;
     nOuterCorrectors 10000;
 
-    // outerCorrectorResidualControl
-    // {
-    //    ".*" 
-    //     {
-    //         tolerance $conv;
-    //         relTol    0;
-    //     }
-    // }
+     outerCorrectorResidualControl
+     {
+        ".*" 
+         {
+             tolerance $conv;
+             relTol    0;
+         }
+     }
 
     residualControl
     {

@@ -16,7 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 tol 1e-16;
-conv 1e-12;
+conv 1e-6;
 
 solvers
 {
@@ -25,8 +25,8 @@ solvers
         solver              GAMG;
         preconditioner      DIC; //DILU;
         smoother            GaussSeidel;
-        tolerance           1e-12;
-        relTol              0;
+        tolerance           $tol;
+        relTol              1e-3;
     }
 }
 
